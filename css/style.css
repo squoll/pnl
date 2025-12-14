@@ -28,12 +28,22 @@ body {
     background-color: var(--dk-darker-bg);
     font-size: .925rem;
     color: var(--dk-gray-300);
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+}
+
+html {
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 #wrapper {
     margin-left: var(--sidebar-width);
     transition: all .3s ease-in-out;
     min-height: 100vh;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 #wrapper.fullwidth {
@@ -53,7 +63,7 @@ body {
     z-index: 1000;
     overflow-y: auto;
     transition: all .3s ease-in-out;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar .close-aside {
@@ -70,7 +80,7 @@ body {
 .sidebar .sidebar-header {
     border-bottom: 1px solid #2a2b3c;
     padding: 20px;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .sidebar .sidebar-header h5 a {
@@ -89,17 +99,17 @@ body {
 }
 
 .sidebar .search .form-control {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
 }
 
 .sidebar .search .form-control::placeholder {
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .sidebar .search i {
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     right: 30px;
     top: 50%;
     transform: translateY(-50%);
@@ -110,18 +120,18 @@ body {
     list-style: none;
 }
 
-.sidebar ul.categories > li {
+.sidebar ul.categories>li {
     padding: 12px 25px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s;
 }
 
-.sidebar ul.categories > li:hover {
-    background: rgba(255,255,255,0.05);
+.sidebar ul.categories>li:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* ОСНОВНЫЕ ССЫЛКИ */
-.sidebar ul.categories > li > a {
+.sidebar ul.categories>li>a {
     color: var(--dk-gray-400);
     text-decoration: none !important;
     display: flex !important;
@@ -131,12 +141,12 @@ body {
     width: 100% !important;
 }
 
-.sidebar ul.categories > li > a:hover {
+.sidebar ul.categories>li>a:hover {
     color: white !important;
     text-decoration: none !important;
 }
 
-.sidebar ul.categories > li > i {
+.sidebar ul.categories>li>i {
     font-size: 18px;
     margin-right: 15px;
     width: 24px;
@@ -144,11 +154,11 @@ body {
 }
 
 /* Выпадающие меню */
-.sidebar ul.categories > li.has-dropdown > a {
+.sidebar ul.categories>li.has-dropdown>a {
     position: relative;
 }
 
-.sidebar ul.categories > li.has-dropdown > a:after {
+.sidebar ul.categories>li.has-dropdown>a:after {
     content: '▾';
     font-weight: 900;
     font-size: 12px;
@@ -156,7 +166,7 @@ body {
     transition: transform 0.3s;
 }
 
-.sidebar ul.categories > li.has-dropdown.opened > a:after {
+.sidebar ul.categories>li.has-dropdown.opened>a:after {
     transform: rotate(-180deg);
 }
 
@@ -164,7 +174,7 @@ body {
 .sidebar ul.categories .sidebar-dropdown {
     padding: 10px 0 10px 40px;
     display: none;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     margin: 10px -25px -12px;
     position: relative;
     z-index: 1;
@@ -175,7 +185,7 @@ body {
 }
 
 /* Ссылки в выпадающем меню - ОЧЕНЬ ВАЖНО! */
-.sidebar ul.categories .sidebar-dropdown > li > a {
+.sidebar ul.categories .sidebar-dropdown>li>a {
     font-size: .85rem;
     padding: 8px 0 !important;
     display: block !important;
@@ -184,18 +194,18 @@ body {
     transition: color 0.3s;
 }
 
-.sidebar ul.categories .sidebar-dropdown > li > a:hover {
+.sidebar ul.categories .sidebar-dropdown>li>a:hover {
     color: white !important;
     text-decoration: none !important;
 }
 
 /* Активный элемент меню */
-.sidebar ul.categories > li.active {
-    background: rgba(255,255,255,0.1);
+.sidebar ul.categories>li.active {
+    background: rgba(255, 255, 255, 0.1);
     border-left: 3px solid #007bff;
 }
 
-.sidebar ul.categories > li.active > a {
+.sidebar ul.categories>li.active>a {
     color: white !important;
 }
 
@@ -208,9 +218,9 @@ body {
 
 /* Убираем все pointer-events для контейнеров */
 .sidebar ul.categories,
-.sidebar ul.categories > li,
+.sidebar ul.categories>li,
 .sidebar ul.categories .sidebar-dropdown,
-.sidebar ul.categories .sidebar-dropdown > li {
+.sidebar ul.categories .sidebar-dropdown>li {
     pointer-events: auto !important;
 }
 
@@ -229,15 +239,15 @@ body {
     .sidebar {
         transform: translateX(-100%);
     }
-    
+
     .sidebar.show-sidebar {
         transform: translateX(0);
     }
-    
+
     .sidebar .close-aside {
         display: block;
     }
-    
+
     #wrapper {
         margin-left: 0 !important;
     }
@@ -251,7 +261,7 @@ body {
     border: none !important;
     padding: 0 20px;
     height: 70px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: relative;
     z-index: 999;
 }
@@ -276,7 +286,7 @@ body {
     text-decoration: none !important;
 }
 
-.navbar .navbar-nav > li > a {
+.navbar .navbar-nav>li>a {
     color: #EEE !important;
     padding: 0 15px !important;
     height: 70px;
@@ -337,7 +347,7 @@ body {
 
 .statistics .box:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .statistics .box i {
@@ -491,7 +501,7 @@ body {
     .statistics .box {
         margin-bottom: 20px;
     }
-    
+
     .statis .box {
         margin-bottom: 20px;
     }
@@ -501,22 +511,24 @@ body {
     .p-4 {
         padding: 15px !important;
     }
-    
+
     /* Скрываем верхний navbar на мобильных устройствах */
     .navbar {
         display: none !important;
     }
-    
+
     .sidebar {
         width: 100%;
     }
+
     .table {
         font-size: 0.875rem;
     }
+
     .card-body {
         padding: 15px !important;
     }
-    
+
     /* Плавающая кнопка меню на мобильных */
     .mobile-menu-btn {
         display: flex !important;
@@ -537,24 +549,29 @@ body {
         cursor: pointer;
         transition: all 0.3s ease;
     }
-    
+
     .mobile-menu-btn:hover {
         transform: scale(1.1);
         box-shadow: 0 6px 16px rgba(0, 123, 255, 0.7);
     }
-    
+
     .mobile-menu-btn:active {
         transform: scale(0.95);
     }
 }
 
 /* Дополнительные стили для кликабельных элементов */
-a, button, .btn, [role="button"] {
+a,
+button,
+.btn,
+[role="button"] {
     cursor: pointer !important;
 }
 
 /* Убираем outline при фокусе, но оставляем для accessibility */
-a:focus, button:focus, .btn:focus {
+a:focus,
+button:focus,
+.btn:focus {
     outline: 2px solid #007bff;
     outline-offset: 2px;
 }
@@ -612,6 +629,7 @@ a:focus, button:focus, .btn:focus {
         transform: translateX(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -634,8 +652,9 @@ a:focus, button:focus, .btn:focus {
 }
 
 .table-hover tbody tr:hover {
-    background-color: rgba(255,255,255,0.05);
+    background-color: rgba(255, 255, 255, 0.05);
 }
+
 /* Исправления для страниц в папке pages */
 body {
     background-color: var(--dk-darker-bg) !important;
@@ -686,13 +705,15 @@ body {
     background-color: var(--dk-dark-bg) !important;
 }
 
-.form-control, .form-select {
+.form-control,
+.form-select {
     background-color: var(--dk-gray-800) !important;
     border-color: var(--dk-gray-700) !important;
     color: var(--dk-gray-300) !important;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     background-color: var(--dk-gray-800) !important;
     border-color: #007bff !important;
     color: var(--dk-gray-300) !important;
@@ -708,7 +729,8 @@ body {
     color: var(--dk-gray-300) !important;
 }
 
-.modal-header, .modal-footer {
+.modal-header,
+.modal-footer {
     border-color: var(--dk-gray-700) !important;
 }
 
@@ -760,10 +782,23 @@ body {
 }
 
 /* Явно задаем фон для нужных элементов */
-body, #wrapper, .p-4, .content, .chart-container, .box, .admin, 
-.statistics .box, .admins .admin, .statis .box,
-.table, .card, .modal-content, .form-control, .form-select,
-.panel, .main-content {
+body,
+#wrapper,
+.p-4,
+.content,
+.chart-container,
+.box,
+.admin,
+.statistics .box,
+.admins .admin,
+.statis .box,
+.table,
+.card,
+.modal-content,
+.form-control,
+.form-select,
+.panel,
+.main-content {
     background-color: var(--dk-dark-bg) !important;
 }
 
@@ -777,7 +812,9 @@ body, #wrapper, .p-4, .content, .chart-container, .box, .admin,
 }
 
 /* Исправляем цвет текста для формы */
-input, select, textarea {
+input,
+select,
+textarea {
     color: var(--dk-gray-300) !important;
 }
 

@@ -27,7 +27,7 @@ if ($req_lang && isset($available[$req_lang])) {
 if (isset($_SESSION['lang']) && isset($available[$_SESSION['lang']])) {
     $lang = $_SESSION['lang'];
 } else {
-    $lang = isset($available['en']) ? 'en' : 'ru';
+    $lang = isset($available['ru']) ? 'ru' : 'en';
     $_SESSION['lang'] = $lang; // Ensure session is populated
 }
 

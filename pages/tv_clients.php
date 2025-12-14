@@ -24,6 +24,18 @@ try {
     $error = t('error_loading_providers') . ": " . $e->getMessage();
 }
 
+// Ensure columns exist
+try {
+    // Add notes column if not exists
+    $stmt = $conn->query("SHOW COLUMNS FROM tv_clients LIKE 'notes'");
+    if ($stmt->rowCount() == 0) {
+        $conn->exec("ALTER TABLE tv_clients ADD COLUMN notes TEXT");
+    }
+} catch (PDOException $e) {
+    // Ignore error if column already exists or other non-critical DB error
+}
+
+
 // Обработка поиска
 $clients = [];
 $search = trim($_GET['search'] ?? '');
@@ -45,11 +57,12 @@ try {
     
     if ($search !== '') {
         $digits = preg_replace('/\D+/', '', $search);
-        $sql .= " WHERE (LOWER(c.first_name) LIKE LOWER(?) OR LOWER(c.address) LIKE LOWER(?) OR LOWER(c.login) LIKE LOWER(?)";
+        $sql .= " WHERE (LOWER(c.first_name) LIKE LOWER(?) OR LOWER(c.address) LIKE LOWER(?) OR LOWER(c.login) LIKE LOWER(?) OR LOWER(c.notes) LIKE LOWER(?)";
         if ($digits !== '') {
             $sql .= " OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(c.phone,' ',''),'-',''),'+',''),'(',')'),')','') LIKE ?";
         }
         $sql .= ")";
+        $params[] = "%$search%";
         $params[] = "%$search%";
         $params[] = "%$search%";
         $params[] = "%$search%";
@@ -120,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $paid = floatval(isset($_POST['paid']) ? $_POST['paid'] : 0);
         $provider_cost = floatval(isset($_POST['provider_cost']) ? $_POST['provider_cost'] : 0);
         $earned = $paid - $provider_cost;
+        $notes = trim($_POST['notes'] ?? '');
         
         if (empty($first_name) || empty($phone)) {
             $error = t('name_phone_required');
@@ -127,12 +141,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $stmt = $conn->prepare("
                     INSERT INTO tv_clients 
-                    (first_name, phone, address, provider_id, subscription_date, months, login, password, device_count, viewing_program, paid, provider_cost, earned) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (first_name, phone, address, provider_id, subscription_date, months, login, password, device_count, viewing_program, paid, provider_cost, earned, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
                     $first_name, $phone, $address, $provider_id, $subscription_date, $months, 
-                    $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned
+                    $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned, $notes
                 ]);
                 $clientId = $conn->lastInsertId();
                 
@@ -193,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $paid = floatval(isset($_POST['paid']) ? $_POST['paid'] : 0);
         $provider_cost = floatval(isset($_POST['provider_cost']) ? $_POST['provider_cost'] : 0);
         $earned = $paid - $provider_cost;
+        $notes = trim($_POST['notes'] ?? '');
         
         try {
             // Получаем старые значения ДО обновления для определения разницы
@@ -203,12 +218,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("
                 UPDATE tv_clients SET 
                 first_name = ?, phone = ?, address = ?, provider_id = ?, subscription_date = ?, months = ?, 
-                login = ?, password = ?, device_count = ?, viewing_program = ?, paid = ?, provider_cost = ?, earned = ? 
+                login = ?, password = ?, device_count = ?, viewing_program = ?, paid = ?, provider_cost = ?, earned = ?, notes = ? 
                 WHERE id = ?
             ");
             $stmt->execute([
                 $first_name, $phone, $address, $provider_id, $subscription_date, $months, 
-                $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned, $client_id
+                $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned, $notes, $client_id
             ]);
             
             // Если финансовые данные изменились, записываем разницу в tv_payments
@@ -294,13 +309,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $success = t('subscription_extended_success');
                 
-                $stmt = $conn->query(
+            $stmt = $conn->query(
                     "SELECT c.*, p.operator FROM tv_clients c LEFT JOIN tv_providers p ON c.provider_id = p.id ORDER BY c.subscription_date DESC"
                 );
                 $clients = $stmt->fetchAll();
             }
         } catch(PDOException $e) {
             $error = t('error_extend_subscription') . ': ' . $e->getMessage();
+        }
+    }
+    
+    // Обработка удаления клиента
+    if (isset($_POST['delete_client'])) {
+        $client_id = intval(isset($_POST['client_id']) ? $_POST['client_id'] : 0);
+        
+        try {
+            $stmt = $conn->prepare("DELETE FROM tv_clients WHERE id = ?");
+            $stmt->execute([$client_id]);
+            
+            $success = t('delete_success');
+            
+            $stmt = $conn->query(
+                "SELECT c.*, p.operator FROM tv_clients c LEFT JOIN tv_providers p ON c.provider_id = p.id ORDER BY c.subscription_date DESC"
+            );
+            $clients = $stmt->fetchAll();
+        } catch(PDOException $e) {
+            $error = t('error_delete_client') . ": " . $e->getMessage();
         }
     }
     }
@@ -532,6 +566,10 @@ if (isset($_GET['edit'])) {
                         <input type="number" step="0.01" name="earned" class="form-control" value="0" readonly>
                     </div>
                     <div class="col-12">
+                        <label class="form-label"><?= htmlspecialchars(t('notes')) ?></label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="<?= htmlspecialchars(t('notes_placeholder')) ?>"></textarea>
+                    </div>
+                    <div class="col-12">
                         <button type="submit" name="add_client" class="btn btn-success w-100"><?= htmlspecialchars(t('add_client_btn')) ?></button>
                     </div>
                 </div>
@@ -557,8 +595,8 @@ if (isset($_GET['edit'])) {
                                         </a>
                                     </th>
                                     <th><?= htmlspecialchars(t('phone')) ?></th>
-                                    <th><?= htmlspecialchars(t('address')) ?></th>
-                                    <th><?= htmlspecialchars(t('provider')) ?></th>
+                                    <th class="d-none d-md-table-cell"><?= htmlspecialchars(t('address')) ?></th>
+                                    <th class="d-none d-md-table-cell"><?= htmlspecialchars(t('provider')) ?></th>
                                     <th>
                                         <a href="?sort=subscription_date&order=<?= ($sort_by === 'subscription_date' && $sort_order === 'ASC') ? 'DESC' : 'ASC' ?><?= $search ? '&search=' . urlencode($search) : '' ?>" class="text-decoration-none text-white">
                                             <?= htmlspecialchars(t('subscription_date')) ?> <?= $sort_by === 'subscription_date' ? ($sort_order === 'ASC' ? '▲' : '▼') : '' ?>
@@ -598,8 +636,8 @@ if (isset($_GET['edit'])) {
                                             <?= htmlspecialchars($client['first_name']) ?>
                                         </td>
                                         <td><?= htmlspecialchars($client['phone']) ?></td>
-                                        <td><?= htmlspecialchars($client['address']) ?></td>
-                                        <td><?= htmlspecialchars(isset($client['operator']) ? $client['operator'] : t('none')) ?></td>
+                                        <td class="d-none d-md-table-cell"><?= htmlspecialchars($client['address']) ?></td>
+                                        <td class="d-none d-md-table-cell"><?= htmlspecialchars(isset($client['operator']) ? $client['operator'] : t('none')) ?></td>
                                         <td><?= htmlspecialchars($client['subscription_date']) ?></td>
                                         <td><?= $client['months'] ?></td>
                                         <td>
@@ -618,29 +656,23 @@ if (isset($_GET['edit'])) {
                                                 <span class="badge bg-success"><?= htmlspecialchars(t('active')) ?></span>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="text-nowrap">
                                             <div class="btn-group" role="group">
-                                                <button class="btn btn-sm btn-warning" onclick="editClient(<?= $client['id'] ?>)"><?= htmlspecialchars(t('edit')) ?></button>
-                                                <button class="btn btn-sm btn-info" onclick="extendSubscription(<?= $client['id'] ?>)"><?= htmlspecialchars(t('extend')) ?></button>
-                                                <button class="btn btn-sm btn-primary" onclick="viewClient(<?= $client['id'] ?>)"><?= htmlspecialchars(t('view')) ?></button>
-                                                <?php if (!empty($client['login'])): ?>
-                                                    <button class="btn btn-sm btn-outline-secondary copy-link" data-link="<?= htmlspecialchars($client['login']) ?>" title="<?= htmlspecialchars(t('copy_login')) ?>"><?= htmlspecialchars(t('login_short')) ?></button>
-                                                <?php endif; ?>
-                                                <?php if (!empty($client['password'])): ?>
-                                                    <button class="btn btn-sm btn-outline-secondary copy-link" data-link="<?= htmlspecialchars($client['password']) ?>" title="<?= htmlspecialchars(t('copy_password')) ?>"><?= htmlspecialchars(t('password_short')) ?></button>
-                                                <?php endif; ?>
+                                                <button class="btn btn-sm btn-warning" onclick="editClient(<?= $client['id'] ?>)" title="<?= htmlspecialchars(t('edit')) ?>"><i class="uil uil-edit"></i></button>
+                                                <button class="btn btn-sm btn-info" onclick="extendSubscription(<?= $client['id'] ?>)" title="<?= htmlspecialchars(t('extend')) ?>"><i class="uil uil-clock"></i></button>
+                                                <button class="btn btn-sm btn-primary" onclick="viewClient(<?= $client['id'] ?>)" title="<?= htmlspecialchars(t('view')) ?>"><i class="uil uil-eye"></i></button>
                                                 <?php if (!empty($client['address'])): ?>
-                                                    <button class="btn btn-sm btn-outline-secondary copy-link" data-link="<?= htmlspecialchars($client['address']) ?>" title="<?= htmlspecialchars(t('copy_address')) ?>"><?= htmlspecialchars(t('address_short')) ?></button>
-                                                <?php endif; ?>
-                                                <?php if (!empty($client['address'])): ?>
-                                                    <a class="btn btn-sm btn-outline-info" href="map.php?client_id=<?= $client['id'] ?>" title="<?= htmlspecialchars(t('open_map')) ?>"><?= htmlspecialchars(t('map')) ?></a>
+                                                    <a class="btn btn-sm btn-outline-info" href="map.php?client_id=<?= $client['id'] ?>" title="<?= htmlspecialchars(t('open_map')) ?>"><i class="uil uil-map"></i></a>
                                                 <?php endif; ?>
                                                 <?php if (($is_past || $days_left <= 30) && !empty($client['phone'])): ?>
                                                     <button class="btn btn-sm btn-outline-success" onclick="sendRenewalSMS('<?= htmlspecialchars($client['phone']) ?>', '<?= htmlspecialchars($client['first_name']) ?>')" title="<?= htmlspecialchars(t('send_sms')) ?>">
-                                                        <i class="uil-envelope"></i> SMS
+                                                        <i class="uil uil-envelope"></i>
                                                     </button>
                                                 <?php endif; ?>
                                             </div>
+                                            <button class="btn btn-sm btn-danger ms-1" onclick="deleteClient(<?= $client['id'] ?>, '<?= htmlspecialchars($client['first_name']) ?>')" title="<?= htmlspecialchars(t('delete')) ?>">
+                                                <i class="uil uil-trash"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -723,6 +755,10 @@ if (isset($_GET['edit'])) {
                             <label class="form-label"><?= htmlspecialchars(t('my_earned_eur')) ?></label>
                             <input type="number" step="0.01" name="earned" id="edit_earned" class="form-control" readonly>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label"><?= htmlspecialchars(t('notes')) ?></label>
+                            <textarea name="notes" id="edit_notes" class="form-control" rows="3" placeholder="<?= htmlspecialchars(t('notes_placeholder')) ?>"></textarea>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -787,6 +823,28 @@ if (isset($_GET['edit'])) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= htmlspecialchars(t('close')) ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Модальное окно удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?= htmlspecialchars(t('delete_client')) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><?= htmlspecialchars(t('delete_client_confirm')) ?> <strong id="delete_client_name"></strong>?</p>
+                <form id="deleteForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <input type="hidden" name="client_id" id="delete_client_id">
+                    <button type="submit" name="delete_client" class="btn btn-danger w-100"><?= htmlspecialchars(t('delete')) ?></button>
+                </form>
             </div>
         </div>
     </div>
@@ -889,6 +947,7 @@ if (isset($_GET['edit'])) {
                     document.getElementById('edit_paid').value = client.paid;
                     document.getElementById('edit_provider_cost').value = client.provider_cost;
                     document.getElementById('edit_earned').value = (client.paid - client.provider_cost).toFixed(2);
+                    document.getElementById('edit_notes').value = client.notes || '';
                     
                     const editModal = new bootstrap.Modal(document.getElementById('editModal'));
                     editModal.show();
@@ -902,6 +961,13 @@ if (isset($_GET['edit'])) {
         document.getElementById('extend_client_id').value = clientId;
         const extendModal = new bootstrap.Modal(document.getElementById('extendModal'));
         extendModal.show();
+    }
+    
+    // Удаление клиента
+    function deleteClient(id, name) {
+        document.getElementById('delete_client_id').value = id;
+        document.getElementById('delete_client_name').textContent = name;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
     }
     
     // Просмотр клиента
@@ -932,6 +998,14 @@ if (isset($_GET['edit'])) {
                                 <p><strong><?= t('paid_eur') ?>:</strong> €${parseFloat(client.paid).toFixed(2)}</p>
                                 <p><strong><?= t('provider_cost_eur') ?>:</strong> €${parseFloat(client.provider_cost).toFixed(2)}</p>
                                 <p><strong><?= t('my_earned_eur') ?>:</strong> €${parseFloat(client.earned).toFixed(2)}</p>
+                                <hr>
+                                <p><strong><?= t('notes') ?>:</strong></p>
+                                <div class="bg-dark p-2 rounded">${client.notes || '<?= t('none') ?>'}</div>
+                                <div class="mt-3 text-end">
+                                    <button class="btn btn-danger" onclick="deleteClient(${client.id}, '${client.first_name}'); bootstrap.Modal.getInstance(document.getElementById('viewModal')).hide();">
+                                        <?= htmlspecialchars(t('delete_client')) ?>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;

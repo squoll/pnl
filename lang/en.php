@@ -255,6 +255,15 @@ return [
     'logs_description' => 'Description',
     'logs_level' => 'Level',
     'logs_no_desc' => 'No description',
+    'logs_clear' => 'Clear Logs',
+    'logs_clear_title' => 'Clear Security Logs',
+    'logs_clear_confirm' => 'Are you sure you want to delete logs?',
+    'logs_clear_range' => 'Deletion Range',
+    'logs_range_all' => 'All logs',
+    'logs_range_week' => 'Older than a week',
+    'logs_range_month' => 'Older than a month',
+    'logs_cleared_success' => 'Logs cleared successfully',
+    'logs_clear_error' => 'Error clearing logs',
 
     // Filter Options
     'filter_all_types' => 'All Types',
@@ -355,4 +364,10 @@ return [
     'date_created' => 'Created At',
     'back_to_clients' => 'Back to Clients',
     'back_to_home' => 'Back to Home',
+    'notes' => 'Notes',
+    'notes_placeholder' => 'Additional notes about the client...',
+    'delete_client' => 'Delete Client',
+    'delete_client_confirm' => 'Are you sure you want to delete client',
+    'delete_success' => 'Client deleted successfully',
+    'error_delete_client' => 'Error deleting client',
 ];

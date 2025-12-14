@@ -284,6 +284,15 @@ return [
     'logs_description' => 'Описание',
     'logs_level' => 'Уровень',
     'logs_no_desc' => 'Нет описания',
+    'logs_clear' => 'Очистить логи',
+    'logs_clear_title' => 'Очистка логов безопасности',
+    'logs_clear_confirm' => 'Вы уверены, что хотите удалить логи?',
+    'logs_clear_range' => 'Период удаления',
+    'logs_range_all' => 'Все логи',
+    'logs_range_week' => 'Старше недели',
+    'logs_range_month' => 'Старше месяца',
+    'logs_cleared_success' => 'Логи успешно очищены',
+    'logs_clear_error' => 'Ошибка при очистке логов',
     
     // Filter Options
     'filter_all_types' => 'Все типы',
@@ -358,4 +367,10 @@ return [
     'date_created' => 'Дата создания',
     'back_to_clients' => 'Назад к клиентам',
     'back_to_home' => 'На главную',
+    'notes' => 'Комментарии',
+    'notes_placeholder' => 'Дополнительные заметки о клиенте...',
+    'delete_client' => 'Удалить клиента',
+    'delete_client_confirm' => 'Вы уверены, что хотите удалить клиента',
+    'delete_success' => 'Клиент успешно удален',
+    'error_delete_client' => 'Ошибка при удалении клиента',
 ];

@@ -1,6 +1,8 @@
 <?php
 require_once '../includes/auth.php';
 requireAuth();
+require_once '../includes/i18n.php';
+
 
 // Путь к файлу с шаблоном SMS
 $template_file = __DIR__ . '/../config/sms_template.txt';

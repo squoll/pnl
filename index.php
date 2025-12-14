@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/auth.php';
 requireAuth();
+require_once 'includes/i18n.php';
 
 // Обеспечиваем наличие таблицы платежей для графиков
 try {

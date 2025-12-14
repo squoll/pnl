@@ -100,6 +100,7 @@ if ($security->isIpBlocked($client_ip)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars(t('login_page_title')) ?></title>
+    <meta name="robots" content="noindex, nofollow">
     <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css'>
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'>
     <style>
@@ -252,10 +253,44 @@ if ($security->isIpBlocked($client_ip)) {
         .forgot-password a:hover {
             text-decoration: underline;
         }
+        
+        .lang-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .lang-btn {
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .lang-btn:hover {
+            background-color: #f8f9fa;
+            color: #667eea;
+        }
+        
+        .lang-btn.active {
+            background-color: #eef2ff;
+            color: #667eea;
+            border-color: #667eea;
+        }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-container" style="position: relative;">
+        <div class="lang-switcher">
+            <a href="?lang=ru" class="lang-btn <?= (!isset($_SESSION['lang']) || $_SESSION['lang'] === 'ru') ? 'active' : '' ?>">RU</a>
+            <a href="?lang=en" class="lang-btn <?= (isset($_SESSION['lang']) && $_SESSION['lang'] === 'en') ? 'active' : '' ?>">EN</a>
+        </div>
         <div class="logo-container">
             <div class="logo">
                 <i class="fas fa-tv"></i>

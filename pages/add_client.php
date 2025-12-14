@@ -52,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $paid = floatval(isset($_POST['paid']) ? $_POST['paid'] : 0);
         $provider_cost = floatval(isset($_POST['provider_cost']) ? $_POST['provider_cost'] : 0);
         $earned = floatval(isset($_POST['earned']) ? $_POST['earned'] : 0);
+        $notes = trim($_POST['notes'] ?? '');
 
         // Автоматический расчет заработка, если не указан
         if ($earned == 0 && $paid > 0 && $provider_cost > 0) {
@@ -62,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = t('name_phone_required');
         } else {
             try {
-                $stmt = $conn->prepare("INSERT INTO tv_clients (first_name, phone, address, provider_id, subscription_date, months, login, password, device_count, viewing_program, paid, provider_cost, earned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$first_name, $phone, $address, $provider_id, $subscription_date, $months, $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned]);
+                $stmt = $conn->prepare("INSERT INTO tv_clients (first_name, phone, address, provider_id, subscription_date, months, login, password, device_count, viewing_program, paid, provider_cost, earned, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$first_name, $phone, $address, $provider_id, $subscription_date, $months, $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned, $notes]);
                 $clientId = $conn->lastInsertId();
 
                 try {
@@ -259,6 +260,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label for="viewing_program" class="form-label"><?= htmlspecialchars(t('viewing_program_label')) ?></label>
                                 <input type="text" id="viewing_program" name="viewing_program" class="form-control" 
                                        value="<?= htmlspecialchars(isset($_POST['viewing_program']) ? $_POST['viewing_program'] : '') ?>">
+                            </div>
+                            <div class="col-12">
+                                <label for="notes" class="form-label"><?= htmlspecialchars(t('notes')) ?></label>
+                                <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="<?= htmlspecialchars(t('notes_placeholder')) ?>"><?= htmlspecialchars(isset($_POST['notes']) ? $_POST['notes'] : '') ?></textarea>
                             </div>
                         </div>
                     </div>

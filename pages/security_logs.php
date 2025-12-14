@@ -3,6 +3,38 @@ require_once '../includes/auth.php';
 require_once '../includes/i18n.php'; // Required for t() function if not already loaded by header later, but good practice to have it available for logic if needed (though here mostly used in UI)
 requireAuth();
 
+// Обработка удаления логов
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'clear_logs') {
+    if (!$security->verifyCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error = t('invalid_csrf_token');
+    } else {
+        $range = $_POST['range'] ?? 'all';
+        $success_msg = '';
+        $error_msg = '';
+        
+        try {
+            switch ($range) {
+                case 'week':
+                    $conn->exec("DELETE FROM security_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)");
+                    $security->logSecurityEvent('logs_cleared', $_SERVER['REMOTE_ADDR'], $_SESSION['username'], 'Logs older than 7 days cleared', 'medium');
+                    break;
+                case 'month':
+                    $conn->exec("DELETE FROM security_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
+                    $security->logSecurityEvent('logs_cleared', $_SERVER['REMOTE_ADDR'], $_SESSION['username'], 'Logs older than 30 days cleared', 'medium');
+                    break;
+                case 'all':
+                default:
+                    $conn->exec("DELETE FROM security_logs");
+                    $security->logSecurityEvent('logs_cleared', $_SERVER['REMOTE_ADDR'], $_SESSION['username'], 'All logs cleared', 'high');
+                    break;
+            }
+            $success = t('logs_cleared_success');
+        } catch (PDOException $e) {
+            $error = t('logs_clear_error') . ': ' . $e->getMessage();
+        }
+    }
+}
+
 // Получаем параметры фильтрации
 $filter_type = $_GET['type'] ?? 'all';
 $filter_severity = $_GET['severity'] ?? 'all';
@@ -136,8 +168,26 @@ $blocked_ips = $conn->query($blocked_query)->fetchAll(PDO::FETCH_ASSOC);
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><?= htmlspecialchars(t('logs_filters')) ?></h5>
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
+                <i class="fas fa-trash"></i> <?= htmlspecialchars(t('logs_clear')) ?>
+            </button>
         </div>
         <div class="card-body">
+            
+            <?php if (isset($error)): ?>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <?= htmlspecialchars($error) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (isset($success)): ?>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <?= htmlspecialchars($success) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
             <form method="GET" class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label"><?= htmlspecialchars(t('logs_event_type')) ?></label>
@@ -216,6 +266,38 @@ $blocked_ips = $conn->query($blocked_query)->fetchAll(PDO::FETCH_ASSOC);
                 </ul>
             </nav>
             <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Logs Modal -->
+<div class="modal fade" id="clearLogsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?= htmlspecialchars(t('logs_clear_title')) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?= $security->generateCsrfToken() ?>">
+                <input type="hidden" name="action" value="clear_logs">
+                <div class="modal-body">
+                    <p><?= htmlspecialchars(t('logs_clear_confirm')) ?></p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><?= htmlspecialchars(t('logs_clear_range')) ?></label>
+                        <select name="range" class="form-select">
+                            <option value="all"><?= htmlspecialchars(t('logs_range_all')) ?></option>
+                            <option value="week"><?= htmlspecialchars(t('logs_range_week')) ?></option>
+                            <option value="month"><?= htmlspecialchars(t('logs_range_month')) ?></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= htmlspecialchars(t('cancel')) ?></button>
+                    <button type="submit" class="btn btn-danger"><?= htmlspecialchars(t('logs_clear')) ?></button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
