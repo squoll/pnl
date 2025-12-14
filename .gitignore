@@ -1,0 +1,6 @@
+config/db.php
+.idea
+.DS_Store
+*.log
+vendor/
+node_modules/

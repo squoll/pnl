@@ -1,0 +1,46 @@
+<?php
+return [
+    'dashboard_brand' => 'Vadības Panelis',
+    'subtitle' => 'IPTV Pārvaldība',
+    'home' => 'Sākums',
+    'add_client' => 'Pievienot Klientu',
+    'tv' => 'TV',
+    'clients' => 'Klienti',
+    'providers' => 'Pakalpojumu Sniedzēji',
+    'map' => 'Karte',
+    'security_logs' => 'Drošības Žurnāli',
+    'settings' => 'Iestatījumi',
+    'account' => 'Konts',
+    'logout' => 'Iziet',
+    'language' => 'Valoda',
+    'search_clients_placeholder' => 'Meklēt klientus...',
+    'providers_manage' => 'Pakalpojumu sniedzēju pārvaldība',
+    'providers_total' => 'Kopējais sniedzēju skaits',
+    'provider_add' => 'Pievienot pakalpojumu sniedzēju',
+    'operator_name' => 'Operatora nosaukums',
+    'website' => 'Vietne',
+    'login_label' => 'Lietotājvārds',
+    'password_label' => 'Parole',
+    'referral_link' => 'Rekomendācijas saite',
+    'balance_eur' => 'Bilance (€)',
+    'add_provider_btn' => 'Pievienot sniedzēju',
+    'copy_btn' => 'Kopēt',
+    'login_page_title' => 'IPTV Panelis - Pieteikšanās',
+    'login_subtitle' => 'Televīzijas pārvaldības panelis',
+    'username' => 'Lietotājvārds',
+    'enter_username' => 'Ievadiet lietotājvārdu',
+    'password' => 'Parole',
+    'enter_password' => 'Ievadiet paroli',
+    'forgot_password' => 'Aizmirsāt paroli?',
+    'login_submit' => 'Pieteikties',
+    'remember_me' => 'Atcerēties mani',
+    'login_loading' => 'Pieteikšanās...',
+    'forgot_password_msg' => 'Sazinieties ar sistēmas administratoru, lai atjaunotu paroli.',
+    'provider_add_success' => 'Pakalpojumu sniedzējs veiksmīgi pievienots!'
+    , 'access_denied' => 'Piekļuve liegta'
+    , 'ip_blocked_msg' => 'Jūsu IP uz laiku ir bloķēts daudzo neveiksmīgo mēģinājumu dēļ. Mēģiniet vēlāk.'
+    , 'invalid_csrf_token' => 'Nederīgs drošības marķieris'
+    , 'invalid_credentials' => 'Nederīgs lietotājvārds vai parole'
+    , 'too_many_attempts' => 'Pārāk daudz neveiksmīgu mēģinājumu. Jūsu IP tiek bloķēts uz 15 minūtēm.'
+    , 'server_error_try_later' => 'Servera kļūda. Lūdzu, mēģiniet vēlāk.'
+];
