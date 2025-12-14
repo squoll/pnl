@@ -3,7 +3,7 @@
 > The ultimate solution for managing IPTV clients, providers, and financials.
 
 ![Dashboard Banner](https://iptv.standigital.lv/img/2.png)
-*![Login Page](https://iptv.standigital.lv/img/1.png)*
+
 
 ## ✨ Features
 
