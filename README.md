@@ -2,8 +2,8 @@
 
 > The ultimate solution for managing IPTV clients, providers, and financials.
 
-![Dashboard Banner](https://via.placeholder.com/1200x500.png?text=Dashboard+Overview+Screenshot)
-*(Please replace with a screenshot of the main dashboard showing charts and stats)*
+![Dashboard Banner](https://iptv.standigital.lv/img/2.png)
+*(https://iptv.standigital.lv/img/1.png)*
 
 ## ✨ Features
 
@@ -38,14 +38,14 @@ A powerful, responsive, and intuitive control panel designed for IPTV resellers 
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/iptv-dashboard.git
-    cd iptv-dashboard
+    git clone https://github.com/squoll/pnl.git
+    cd pnl
     ```
 
 2.  **Setup Configuration**
     Open `setup.php` in your browser to run the automatic installer:
     ```
-    http://your-server/iptv-dashboard/setup.php
+    http://your-server/pnl/setup.php
     ```
     Follow the on-screen instructions to connect your database.
 
@@ -56,25 +56,18 @@ A powerful, responsive, and intuitive control panel designed for IPTV resellers 
 
 | Dashboard Overview | Client Management |
 |:---:|:---:|
-| ![Dashboard](https://via.placeholder.com/600x400?text=Main+Dashboard) | ![Clients](https://via.placeholder.com/600x400?text=Client+List) |
+| ![Dashboard](https://iptv.standigital.lv/img/2.png) | ![Clients](https://iptv.standigital.lv/img/7.png) |
 | *Visualizes income, active users, and quick actions* | *Filterable list of all clients with status indicators* |
 
 | Financial Reports | Analysis Charts |
 |:---:|:---:|
-| ![Finance](https://via.placeholder.com/600x400?text=Financial+Report) | ![Charts](https://via.placeholder.com/600x400?text=Growth+Charts) |
+| ![Finance](https://iptv.standigital.lv/img/3.png) | ![Charts](https://iptv.standigital.lv/img/3.png) |
 | *Monthly breakdown of earnings and costs* | *Interactive graphs for business growth* |
 
 | Client Map | Security Logs |
 |:---:|:---:|
-| ![Map](https://via.placeholder.com/600x400?text=Interactive+Map) | ![Security](https://via.placeholder.com/600x400?text=Security+Logs) |
+| ![Map](https://iptv.standigital.lv/img/5.png) | ![Security](https://iptv.standigital.lv/img/6.png) |
 | *Geocoded client locations with status clusters* | *Audit trail of all login attempts and blocks* |
-
-### 🖼️ Recommended Screenshots to Take
-To make your GitHub page look professional, please capture:
-1.  **Main Dashboard**: Show the top cards and the graphs populated with some data.
-2.  **Clients List**: Show the `tv_clients.php` page with the status indicators (colors).
-3.  **Mobile View**: A screenshot from a phone to show responsiveness.
-4.  **SMS Feature**: Show the prompt when clicking "SMS" (optional).
 
 ## 🌍 Language Support
 
