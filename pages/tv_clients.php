@@ -782,9 +782,19 @@ if (isset($_GET['edit'])) {
                 <form id="extendForm" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                     <input type="hidden" name="client_id" id="extend_client_id">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label"><?= htmlspecialchars(t('current_expiration')) ?></label>
+                            <input type="text" id="extend_current_expiration" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><?= htmlspecialchars(t('new_expiration')) ?></label>
+                            <input type="text" id="extend_new_expiration" class="form-control" readonly style="font-weight: bold; color: #28a745;">
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label"><?= htmlspecialchars(t('months_to_extend')) ?></label>
-                        <input type="number" name="months_to_add" class="form-control" value="1" min="1" max="36">
+                        <input type="number" id="extend_months_to_add" name="months_to_add" class="form-control" value="1" min="1" max="36">
                     </div>
                     <div class="row g-3">
                         <div class="col-md-4">
@@ -959,8 +969,48 @@ if (isset($_GET['edit'])) {
     // Продление подписки
     function extendSubscription(clientId) {
         document.getElementById('extend_client_id').value = clientId;
-        const extendModal = new bootstrap.Modal(document.getElementById('extendModal'));
-        extendModal.show();
+        
+        // Load client data to get current info
+        fetch('get_client.php?id=' + clientId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const client = data.client;
+                    const currentExp = client.expiration_date;
+                    document.getElementById('extend_current_expiration').value = currentExp;
+                    
+                    // Calc initial new expiration (default 1 month)
+                    calculateNewExpiration(currentExp, 1);
+                    
+                    // Setup listener
+                    const monthsInput = document.getElementById('extend_months_to_add');
+                    // Remove old listeners to avoid duplicates (though simple replacement is easier)
+                    const newMonthsInput = monthsInput.cloneNode(true);
+                    monthsInput.parentNode.replaceChild(newMonthsInput, monthsInput);
+                    
+                    newMonthsInput.addEventListener('input', function() {
+                        calculateNewExpiration(currentExp, parseInt(this.value) || 0);
+                    });
+
+                    const extendModal = new bootstrap.Modal(document.getElementById('extendModal'));
+                    extendModal.show();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function calculateNewExpiration(currentDateStr, monthsToAdd) {
+        if (!currentDateStr) return;
+        const date = new Date(currentDateStr);
+        // JS Date months are 0-indexed
+        date.setMonth(date.getMonth() + monthsToAdd);
+        
+        // Format YYYY-MM-DD
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        
+        document.getElementById('extend_new_expiration').value = `${y}-${m}-${d}`;
     }
     
     // Удаление клиента

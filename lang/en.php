@@ -77,6 +77,8 @@ return [
      'when' => 'When',
      'user' => 'User',
      'statistics_year' => 'Statistics for current year',
+     'events_total' => 'Total events',
+     'mon' => 'mo',
 
      // Chart Labels
      'chart_new_subs' => 'New Subscriptions',
@@ -169,6 +171,8 @@ return [
     'close' => 'Close',
     'subscription_term' => 'Subscription Term',
     'months_suffix' => 'months',
+    'current_expiration' => 'Current Expiration',
+    'new_expiration' => 'New Expiration',
     'device_count' => 'Device Count',
     'client_added_success' => 'Client added successfully!',
     'client_updated_success' => 'Client updated successfully!',

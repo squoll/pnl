@@ -77,6 +77,8 @@ return [
     'when' => 'Когда',
     'user' => 'Пользователь',
     'statistics_year' => 'Статистика за текущий год',
+    'events_total' => 'Всего событий',
+    'mon' => 'мес',
     
     // Chart Labels
     'chart_new_subs' => 'Новые подписки',
@@ -161,6 +163,8 @@ return [
     'close' => 'Закрыть',
     'subscription_term' => 'Срок подписки',
     'months_suffix' => 'месяцев',
+    'current_expiration' => 'Текущее окончание',
+    'new_expiration' => 'Новое окончание',
     'device_count' => 'Количество устройств',
     'client_added_success' => 'Клиент успешно добавлен!',
     'client_updated_success' => 'Клиент успешно обновлен!',

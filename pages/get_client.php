@@ -22,6 +22,20 @@ if (isset($_GET['id'])) {
         $client = $stmt->fetch();
         
         if ($client) {
+            // Calculate expiration
+            $subscription_date = new DateTime($client['subscription_date']);
+            $expiration_date = clone $subscription_date;
+            $expiration_date->modify("+{$client['months']} months");
+            
+            $now = new DateTime();
+            $days_left = $now->diff($expiration_date)->days;
+            if ($now > $expiration_date) {
+                $days_left = -$days_left;
+            }
+            
+            $client['expiration_date'] = $expiration_date->format('Y-m-d');
+            $client['days_left'] = $days_left;
+            
             echo json_encode(['success' => true, 'client' => $client]);
         } else {
             echo json_encode(['success' => false, 'error' => t('api_error_client_not_found')]);

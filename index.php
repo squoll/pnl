@@ -161,7 +161,26 @@ $stmt = $conn->prepare("SELECT COALESCE(SUM(provider_cost),0) FROM tv_payments W
 $stmt->execute([$current_year]);
 $total_cost = $stmt->fetchColumn() ?: 0;
 
-$stmt = $conn->prepare("SELECT e.*, c.first_name, c.phone, p.operator FROM tv_events e LEFT JOIN tv_clients c ON c.id = e.client_id LEFT JOIN tv_providers p ON p.id = e.provider_id ORDER BY e.created_at DESC LIMIT 20");
+// Events Pagination Logic
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = 5;
+$offset = ($page - 1) * $limit;
+
+// Count total events
+$stmt = $conn->prepare("SELECT COUNT(*) FROM tv_events");
+$stmt->execute();
+$total_events = $stmt->fetchColumn();
+$total_pages = ceil($total_events / $limit);
+
+// Fetch events with limit
+$stmt = $conn->prepare("SELECT e.*, c.first_name, c.phone, p.operator 
+                        FROM tv_events e 
+                        LEFT JOIN tv_clients c ON c.id = e.client_id 
+                        LEFT JOIN tv_providers p ON p.id = e.provider_id 
+                        ORDER BY e.created_at DESC 
+                        LIMIT :limit OFFSET :offset");
+$stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $events = $stmt->fetchAll();
 
@@ -315,40 +334,89 @@ $months_labels = [
             <div class="row">
                 <div class="col-md-12">
                     <div class="box">
-                        <h4><?= htmlspecialchars(t('event_feed')) ?></h4>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0"><?= htmlspecialchars(t('event_feed')) ?></h4>
+                            <span class="text-muted fs-6"><?= $total_events ?> <?= htmlspecialchars(t('events_total') ?? 'events') ?></span>
+                        </div>
+                        
                         <?php if (empty($events)): ?>
                             <p class="text-muted"><?= htmlspecialchars(t('no_events')) ?></p>
                         <?php else: ?>
+                            <div class="list-group">
                             <?php foreach ($events as $ev): ?>
-                                <div class="admin d-flex align-items-center rounded-2 p-3 mb-3">
+                                <div class="admin d-flex align-items-center rounded-2 p-2 mb-2 border-bottom">
                                     <div class="img">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;"
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"
                                              class="<?= $ev['type']==='payment_recorded' ? 'bg-success' : ($ev['type']==='client_created' ? 'bg-primary' : 'bg-warning') ?>">
-                                            <span class="text-white fw-bold">
+                                            <span class="text-white fw-bold fs-6">
                                                 <?= $ev['type']==='payment_recorded' ? '€' : ($ev['type']==='client_created' ? '+' : '+M') ?>
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="ms-3">
-                                        <h3 class="fs-6 mb-1">
-                                            <?= htmlspecialchars($ev['type']==='payment_recorded' ? t('payment') : ($ev['type']==='client_created' ? t('new_client') : t('renewal'))) ?>
-                                        </h3>
-                                        <p class="mb-1">
-                                            <?= htmlspecialchars(t('client')) ?>: <?= htmlspecialchars($ev['first_name'] ?? '') ?>
-                                            <?php if (!empty($ev['operator'])): ?> | <?= htmlspecialchars(t('provider')) ?>: <?= htmlspecialchars($ev['operator']) ?><?php endif; ?>
-                                        </p>
-                                        <p class="mb-0">
+                                    <div class="ms-3 flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h3 class="fs-6 mb-0 fw-bold">
+                                                <?= htmlspecialchars($ev['type']==='payment_recorded' ? t('payment') : ($ev['type']==='client_created' ? t('new_client') : t('renewal'))) ?>
+                                            </h3>
+                                            <small class="text-muted"><?= htmlspecialchars($ev['created_at']) ?></small>
+                                        </div>
+                                        <p class="mb-0 small">
+                                            <?= htmlspecialchars(t('client')) ?>: <strong><?= htmlspecialchars($ev['first_name'] ?? '') ?></strong>
+                                            <?php if (!empty($ev['operator'])): ?> | <?= htmlspecialchars($ev['operator']) ?><?php endif; ?>
                                             <?php if ($ev['type']==='payment_recorded'): ?>
-                                                <?= htmlspecialchars(t('amount')) ?>: €<?= number_format($ev['amount'] ?? 0, 2) ?>
+                                                | <span class="text-success fw-bold">€<?= number_format($ev['amount'] ?? 0, 2) ?></span>
                                             <?php elseif ($ev['type']==='subscription_extended'): ?>
-                                                <?= htmlspecialchars(t('months_count')) ?>: <?= intval($ev['months'] ?? 0) ?>
+                                                | <?= intval($ev['months'] ?? 0) ?> <?= htmlspecialchars(t('mon') ?? 'mon') ?>.
                                             <?php endif; ?>
-                                            | <?= htmlspecialchars(t('when')) ?>: <?= htmlspecialchars($ev['created_at']) ?>
-                                            <?php if (!empty($ev['user'])): ?> | <?= htmlspecialchars(t('user')) ?>: <?= htmlspecialchars($ev['user']) ?><?php endif; ?>
+                                            <?php if (!empty($ev['user'])): ?> | <i class="uil-user"></i> <?= htmlspecialchars($ev['user']) ?><?php endif; ?>
                                         </p>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
+                            </div>
+
+                            <!-- Pagination -->
+                            <?php if ($total_pages > 1): ?>
+                            <nav aria-label="Event feed pagination" class="mt-3">
+                                <ul class="pagination pagination-sm justify-content-center" style="margin-bottom: 0;">
+                                    <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
+                                        <a class="page-link" href="?page=<?= $page - 1 ?>" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <?php
+                                    $range = 2;
+                                    $start_page = max(1, $page - $range);
+                                    $end_page = min($total_pages, $page + $range);
+                                    
+                                    if ($start_page > 1) {
+                                        echo '<li class="page-item"><a class="page-link" href="?page=1">1</a></li>';
+                                        if ($start_page > 2) {
+                                            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                                        }
+                                    }
+
+                                    for ($i = $start_page; $i <= $end_page; $i++) {
+                                        echo '<li class="page-item ' . ($i == $page ? 'active' : '') . '"><a class="page-link" href="?page=' . $i . '">' . $i . '</a></li>';
+                                    }
+
+                                    if ($end_page < $total_pages) {
+                                        if ($end_page < $total_pages - 1) {
+                                            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                                        }
+                                        echo '<li class="page-item"><a class="page-link" href="?page=' . $total_pages . '">' . $total_pages . '</a></li>';
+                                    }
+                                    ?>
+
+                                    <li class="page-item <?= ($page >= $total_pages) ? 'disabled' : '' ?>">
+                                        <a class="page-link" href="?page=<?= $page + 1 ?>" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
