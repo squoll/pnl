@@ -377,4 +377,19 @@ return [
     'delete_client_confirm' => 'Вы уверены, что хотите удалить клиента',
     'delete_success' => 'Клиент успешно удален',
     'error_delete_client' => 'Ошибка при удалении клиента',
+    
+    // System Health
+    'system_health_title' => 'Здоровье системы',
+    'download_backup' => 'Скачать бэкап',
+    'arpu_30d' => 'ARPU (30 дней)',
+    'avg_revenue_user' => 'Средний доход на пользователя',
+    'churn_rate' => 'Отток клиентов',
+    'clients_expired_30d' => 'клиентов ушло за 30 дней',
+    'db_size' => 'Размер БД',
+    'tables' => 'таблиц',
+    'db_stats' => 'Статистика базы данных',
+    'table_name' => 'Имя таблицы',
+    'rows' => 'Строк',
+    'size' => 'Размер',
+    'last_updated' => 'Обновлено',
 ];

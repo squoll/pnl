@@ -93,6 +93,7 @@ $is_active = function($page) use ($current_page) {
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item text-decoration-none" href="<?= $pages_path ?>account.php"><?= htmlspecialchars(t('account')) ?></a></li>
                         <li><a class="dropdown-item text-decoration-none" href="<?= $pages_path ?>sms_settings.php"><?= htmlspecialchars(t('sms_settings')) ?></a></li>
+                        <li><a class="dropdown-item text-decoration-none" href="<?= $pages_path ?>system_health.php"><i class="uil-heart-medical me-1"></i> <?= htmlspecialchars(t('system_health_title') ?? 'System Health') ?></a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-decoration-none" href="<?= $base_path ?>logout.php"><?= htmlspecialchars(t('logout')) ?></a></li>
                         <li><hr class="dropdown-divider"></li>

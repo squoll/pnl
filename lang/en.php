@@ -374,4 +374,19 @@ return [
     'delete_client_confirm' => 'Are you sure you want to delete client',
     'delete_success' => 'Client deleted successfully',
     'error_delete_client' => 'Error deleting client',
+
+    // System Health
+    'system_health_title' => 'System Health',
+    'download_backup' => 'Download Backup',
+    'arpu_30d' => 'ARPU (30 Days)',
+    'avg_revenue_user' => 'Average Revenue Per User',
+    'churn_rate' => 'Churn Rate',
+    'clients_expired_30d' => 'clients expired in last 30 days',
+    'db_size' => 'Database Size',
+    'tables' => 'tables',
+    'db_stats' => 'Database Statistics',
+    'table_name' => 'Table Name',
+    'rows' => 'Rows',
+    'size' => 'Size',
+    'last_updated' => 'Last Updated',
 ];
