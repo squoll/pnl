@@ -389,4 +389,10 @@ return [
     'rows' => 'Rows',
     'size' => 'Size',
     'last_updated' => 'Last Updated',
+    
+    // Map - Failed Geocoding
+    'failed_geocoding_title' => 'Failed Geocoding',
+    'failed_geocoding_subtitle' => 'These addresses could not be found on the map. Use autocomplete to fix them.',
+    'update_coordinates' => 'Update',
+    'map_select_address_first' => 'Please select an address from the suggestions first',
 ];

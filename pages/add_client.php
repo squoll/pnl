@@ -42,6 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $first_name = trim(isset($_POST['first_name']) ? $_POST['first_name'] : '');
         $phone = trim(isset($_POST['phone']) ? $_POST['phone'] : '');
         $address = trim(isset($_POST['address']) ? $_POST['address'] : '');
+        $latitude = isset($_POST['latitude']) && $_POST['latitude'] !== '' ? floatval($_POST['latitude']) : null;
+        $longitude = isset($_POST['longitude']) && $_POST['longitude'] !== '' ? floatval($_POST['longitude']) : null;
         $provider_id = intval(isset($_POST['provider_id']) ? $_POST['provider_id'] : 0);
         $subscription_date = trim(isset($_POST['subscription_date']) ? $_POST['subscription_date'] : date('Y-m-d'));
         $months = intval(isset($_POST['months']) ? $_POST['months'] : 0);
@@ -63,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = t('name_phone_required');
         } else {
             try {
-                $stmt = $conn->prepare("INSERT INTO tv_clients (first_name, phone, address, provider_id, subscription_date, months, login, password, device_count, viewing_program, paid, provider_cost, earned, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$first_name, $phone, $address, $provider_id, $subscription_date, $months, $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned, $notes]);
+                $stmt = $conn->prepare("INSERT INTO tv_clients (first_name, phone, address, latitude, longitude, provider_id, subscription_date, months, login, password, device_count, viewing_program, paid, provider_cost, earned, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$first_name, $phone, $address, $latitude, $longitude, $provider_id, $subscription_date, $months, $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned, $notes]);
                 $clientId = $conn->lastInsertId();
 
                 try {
@@ -142,6 +144,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 24px;
             font-weight: bold;
         }
+        
+        .address-suggestions {
+            position: absolute;
+            background: var(--dk-dark-bg);
+            border: 1px solid var(--dk-gray-700);
+            border-radius: 0 0 5px 5px;
+            width: 95%;
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .address-suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--dk-gray-700);
+        }
+        
+        .address-suggestion-item:hover {
+            background-color: var(--dk-gray-800);
+        }
+        
+        .address-wrapper {
+            position: relative;
+        }
     </style>
 <div class="p-4">
     <div class="welcome mb-4">
@@ -195,8 +224,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="col-12">
                                 <label for="address" class="form-label"><?= htmlspecialchars(t('address')) ?></label>
-                                <input type="text" id="address" name="address" class="form-control" 
-                                       value="<?= htmlspecialchars(isset($_POST['address']) ? $_POST['address'] : '') ?>">
+                                <div class="address-wrapper">
+                                    <input type="text" id="address" name="address" class="form-control" 
+                                           value="<?= htmlspecialchars(isset($_POST['address']) ? $_POST['address'] : '') ?>" autocomplete="off" placeholder="Start typing to search address...">
+                                    <input type="hidden" id="latitude" name="latitude" value="<?= htmlspecialchars(isset($_POST['latitude']) ? $_POST['latitude'] : '') ?>">
+                                    <input type="hidden" id="longitude" name="longitude" value="<?= htmlspecialchars(isset($_POST['longitude']) ? $_POST['longitude'] : '') ?>">
+                                    <div id="address-suggestions" class="address-suggestions"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -424,6 +458,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             password += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         document.getElementById('password').value = password;
+    });
+
+    // Автокомплит адреса
+    const addressInput = document.getElementById('address');
+    const suggestionsBox = document.getElementById('address-suggestions');
+    const latInput = document.getElementById('latitude');
+    const lonInput = document.getElementById('longitude');
+    let debounceTimer;
+
+    addressInput.addEventListener('input', function() {
+        const query = this.value;
+        
+        // Сбрасываем координаты при изменении
+        if (latInput.value) {
+            latInput.value = '';
+            lonInput.value = '';
+        }
+        
+        clearTimeout(debounceTimer);
+        suggestionsBox.style.display = 'none';
+        
+        if (query.length < 3) return;
+        
+        debounceTimer = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Latvia')}&limit=5&addressdetails=1&accept-language=ru`, {
+                headers: { 'Accept-Language': 'ru' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                suggestionsBox.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'address-suggestion-item';
+                        div.textContent = item.display_name;
+                        div.addEventListener('click', function() {
+                            addressInput.value = item.display_name;
+                            latInput.value = item.lat;
+                            lonInput.value = item.lon;
+                            suggestionsBox.style.display = 'none';
+                        });
+                        suggestionsBox.appendChild(div);
+                    });
+                    suggestionsBox.style.display = 'block';
+                }
+            })
+            .catch(err => console.error('Geocoding error:', err));
+        }, 500);
+    });
+
+    // Скрывать подсказки при клике вне
+    document.addEventListener('click', function(e) {
+        if (e.target !== addressInput && e.target !== suggestionsBox) {
+            suggestionsBox.style.display = 'none';
+        }
     });
 </script>
 <?php include '../includes/footer.php'; ?>

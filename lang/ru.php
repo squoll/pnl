@@ -392,4 +392,10 @@ return [
     'rows' => 'Строк',
     'size' => 'Размер',
     'last_updated' => 'Обновлено',
+    
+    // Map - Failed Geocoding
+    'failed_geocoding_title' => 'Ошибки геокодирования',
+    'failed_geocoding_subtitle' => 'Эти адреса не удалось найти на карте. Используйте автодополнение для исправления.',
+    'update_coordinates' => 'Обновить',
+    'map_select_address_first' => 'Пожалуйста, выберите адрес из списка подсказок',
 ];

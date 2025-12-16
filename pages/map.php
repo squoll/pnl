@@ -109,6 +109,32 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 'geocode') {
     exit;
 }
 
+// Обработка AJAX запроса для обновления адреса и координат
+if (isset($_POST['ajax']) && $_POST['ajax'] == 'update_address') {
+    global $conn;
+    header('Content-Type: application/json');
+    
+    $client_id = $_POST['client_id'] ?? 0;
+    $address = $_POST['address'] ?? '';
+    $latitude = $_POST['latitude'] ?? null;
+    $longitude = $_POST['longitude'] ?? null;
+    
+    if (empty($client_id) || empty($address) || empty($latitude) || empty($longitude)) {
+        echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+        exit;
+    }
+    
+    try {
+        $stmt = $conn->prepare("UPDATE tv_clients SET address = ?, latitude = ?, longitude = ? WHERE id = ?");
+        $stmt->execute([$address, $latitude, $longitude, $client_id]);
+        
+        echo json_encode(['success' => true]);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
 // Получаем клиентов с координатами
 $query_with_coords = "SELECT c.*, p.operator,
                      (SELECT COUNT(*) FROM tv_clients WHERE provider_id = p.id) as total_clients,
@@ -152,9 +178,23 @@ foreach ($clients_with_data as $client) {
     }
 }
 
+// Получаем клиентов с адресами но без координат (failed geocoding)
+$failed_clients = [];
+foreach ($clients_with_data as $client) {
+    if (!$client['latitude'] || !$client['longitude']) {
+        $failed_clients[] = [
+            'id' => $client['id'],
+            'name' => $client['first_name'],
+            'phone' => $client['phone'],
+            'address' => $client['address']
+        ];
+    }
+}
+
 // Подсчет статистики
 $clients_with_address = count($clients);
 $clients_geocoded = count($clients_for_map);
+$failed_count = count($failed_clients);
 $geocoding_percentage = $clients_with_address > 0 ? round(($clients_geocoded / $clients_with_address) * 100) : 0;
 ?>
 
@@ -370,6 +410,66 @@ $geocoding_percentage = $clients_with_address > 0 ? round(($clients_geocoded / $
                 <div id="map"></div>
             </div>
         </div>
+    </div>
+    
+    <!-- Failed Geocoding Section -->
+    <?php if ($failed_count > 0): ?>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="uil uil-exclamation-triangle"></i> 
+                        <?= htmlspecialchars(t('failed_geocoding_title')) ?> (<?= $failed_count ?>)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted"><?= htmlspecialchars(t('failed_geocoding_subtitle')) ?></p>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th><?= htmlspecialchars(t('name')) ?></th>
+                                    <th><?= htmlspecialchars(t('phone')) ?></th>
+                                    <th><?= htmlspecialchars(t('address')) ?></th>
+                                    <th><?= htmlspecialchars(t('actions')) ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($failed_clients as $fc): ?>
+                                <tr id="failed-row-<?= $fc['id'] ?>">
+                                    <td><?= htmlspecialchars($fc['name']) ?></td>
+                                    <td><?= htmlspecialchars($fc['phone']) ?></td>
+                                    <td>
+                                        <div class="address-wrapper" style="position: relative;">
+                                            <input type="text" 
+                                                   class="form-control failed-address-input" 
+                                                   data-client-id="<?= $fc['id'] ?>"
+                                                   value="<?= htmlspecialchars($fc['address']) ?>"
+                                                   autocomplete="off"
+                                                   placeholder="Start typing...">
+                                            <input type="hidden" class="failed-lat" data-client-id="<?= $fc['id'] ?>">
+                                            <input type="hidden" class="failed-lon" data-client-id="<?= $fc['id'] ?>">
+                                            <div class="address-suggestions failed-suggestions-<?= $fc['id'] ?>" 
+                                                 style="position: absolute; background: var(--dk-dark-bg); border: 1px solid var(--dk-gray-700); border-radius: 0 0 5px 5px; width: 100%; z-index: 1000; max-height: 200px; overflow-y: auto; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success update-failed-btn" data-client-id="<?= $fc['id'] ?>">
+                                            <i class="uil uil-check"></i> <?= htmlspecialchars(t('update_coordinates')) ?>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
 <!-- Скрипты -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
@@ -672,5 +772,129 @@ $geocoding_percentage = $clients_with_address > 0 ? round(($clients_geocoded / $
         const center = JSON.parse(savedCenter);
         map.setView(center, parseInt(savedZoom));
     }
+    
+    // Автокомплит для failed addresses
+    document.querySelectorAll('.failed-address-input').forEach(input => {
+        const clientId = input.dataset.clientId;
+        const suggestionsBox = document.querySelector(`.failed-suggestions-${clientId}`);
+        const latInput = document.querySelector(`.failed-lat[data-client-id="${clientId}"]`);
+        const lonInput = document.querySelector(`.failed-lon[data-client-id="${clientId}"]`);
+        let debounceTimer;
+        
+        input.addEventListener('input', function() {
+            const query = this.value;
+            
+            // Сбрасываем координаты
+            if (latInput.value) {
+                latInput.value = '';
+                lonInput.value = '';
+            }
+            
+            clearTimeout(debounceTimer);
+            suggestionsBox.style.display = 'none';
+            
+            if (query.length < 3) return;
+            
+            debounceTimer = setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Latvia')}&limit=5&addressdetails=1&accept-language=ru`, {
+                    headers: { 'Accept-Language': 'ru' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    suggestionsBox.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'address-suggestion-item';
+                            div.style.padding = '10px';
+                            div.style.cursor = 'pointer';
+                            div.style.borderBottom = '1px solid var(--dk-gray-700)';
+                            div.textContent = item.display_name;
+                            div.addEventListener('click', function() {
+                                input.value = item.display_name;
+                                latInput.value = item.lat;
+                                lonInput.value = item.lon;
+                                suggestionsBox.style.display = 'none';
+                            });
+                            div.addEventListener('mouseenter', function() {
+                                this.style.backgroundColor = 'var(--dk-gray-800)';
+                            });
+                            div.addEventListener('mouseleave', function() {
+                                this.style.backgroundColor = '';
+                            });
+                            suggestionsBox.appendChild(div);
+                        });
+                        suggestionsBox.style.display = 'block';
+                    }
+                })
+                .catch(err => console.error('Geocoding error:', err));
+            }, 500);
+        });
+    });
+    
+    // Обработка кнопок обновления
+    document.querySelectorAll('.update-failed-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const clientId = this.dataset.clientId;
+            const addressInput = document.querySelector(`.failed-address-input[data-client-id="${clientId}"]`);
+            const latInput = document.querySelector(`.failed-lat[data-client-id="${clientId}"]`);
+            const lonInput = document.querySelector(`.failed-lon[data-client-id="${clientId}"]`);
+            
+            const address = addressInput.value;
+            const latitude = latInput.value;
+            const longitude = lonInput.value;
+            
+            if (!latitude || !longitude) {
+                alert('<?= t('map_select_address_first') ?>');
+                return;
+            }
+            
+            // Отключаем кнопку
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> <?= t('map_js_processing') ?>';
+            
+            // Отправляем AJAX запрос
+            const formData = new FormData();
+            formData.append('ajax', 'update_address');
+            formData.append('client_id', clientId);
+            formData.append('address', address);
+            formData.append('latitude', latitude);
+            formData.append('longitude', longitude);
+            
+            fetch('map.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Удаляем строку из таблицы
+                    document.getElementById(`failed-row-${clientId}`).remove();
+                    
+                    // Перезагружаем страницу для обновления карты
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                    this.disabled = false;
+                    this.innerHTML = '<i class="uil uil-check"></i> <?= t('update_coordinates') ?>';
+                }
+            })
+            .catch(err => {
+                console.error('Update error:', err);
+                alert('Network error');
+                this.disabled = false;
+                this.innerHTML = '<i class="uil uil-check"></i> <?= t('update_coordinates') ?>';
+            });
+        });
+    });
+    
+    // Скрывать подсказки при клике вне
+    document.addEventListener('click', function(e) {
+        if (!e.target.classList.contains('failed-address-input')) {
+            document.querySelectorAll('.address-suggestions').forEach(box => {
+                box.style.display = 'none';
+            });
+        }
+    });
 </script>
 <?php include '../includes/footer.php'; ?>

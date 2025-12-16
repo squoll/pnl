@@ -18,8 +18,11 @@ if (empty($address) || $client_id <= 0) {
     exit();
 }
 
+
 function geocodeAddressOSM($address) {
     $url = "https://nominatim.openstreetmap.org/search";
+    
+    // First attempt: with Latvia constraint
     $params = [
         'q' => $address . ', Latvia',
         'format' => 'json',
@@ -42,6 +45,24 @@ function geocodeAddressOSM($address) {
     
     $response = @file_get_contents($url . '?' . $query_string, false, $context);
     
+    if ($response !== FALSE) {
+        $data = json_decode($response, true);
+        
+        if (!empty($data)) {
+            return [
+                'lat' => $data[0]['lat'],
+                'lon' => $data[0]['lon'],
+                'display_name' => $data[0]['display_name']
+            ];
+        }
+    }
+    
+    // Second attempt: without Latvia constraint (global search)
+    $params['q'] = $address;
+    $query_string = http_build_query($params);
+    
+    $response = @file_get_contents($url . '?' . $query_string, false, $context);
+    
     if ($response === FALSE) {
         return ['error' => 'Geocoding service unavailable'];
     }
@@ -58,6 +79,7 @@ function geocodeAddressOSM($address) {
         'display_name' => $data[0]['display_name']
     ];
 }
+
 
 try {
     $result = geocodeAddressOSM($address);

@@ -24,12 +24,25 @@ try {
     $error = t('error_loading_providers') . ": " . $e->getMessage();
 }
 
+
 // Ensure columns exist
 try {
     // Add notes column if not exists
     $stmt = $conn->query("SHOW COLUMNS FROM tv_clients LIKE 'notes'");
     if ($stmt->rowCount() == 0) {
         $conn->exec("ALTER TABLE tv_clients ADD COLUMN notes TEXT");
+    }
+
+    // Add latitude column if not exists
+    $stmt = $conn->query("SHOW COLUMNS FROM tv_clients LIKE 'latitude'");
+    if ($stmt->rowCount() == 0) {
+        $conn->exec("ALTER TABLE tv_clients ADD COLUMN latitude DECIMAL(10, 8)");
+    }
+
+    // Add longitude column if not exists
+    $stmt = $conn->query("SHOW COLUMNS FROM tv_clients LIKE 'longitude'");
+    if ($stmt->rowCount() == 0) {
+        $conn->exec("ALTER TABLE tv_clients ADD COLUMN longitude DECIMAL(11, 8)");
     }
 } catch (PDOException $e) {
     // Ignore error if column already exists or other non-critical DB error
@@ -197,6 +210,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $first_name = trim(isset($_POST['first_name']) ? $_POST['first_name'] : '');
         $phone = trim(isset($_POST['phone']) ? $_POST['phone'] : '');
         $address = trim(isset($_POST['address']) ? $_POST['address'] : '');
+        $latitude = isset($_POST['latitude']) && $_POST['latitude'] !== '' ? floatval($_POST['latitude']) : null;
+        $longitude = isset($_POST['longitude']) && $_POST['longitude'] !== '' ? floatval($_POST['longitude']) : null;
         $provider_id = intval(isset($_POST['provider_id']) ? $_POST['provider_id'] : 0);
         $subscription_date = isset($_POST['subscription_date']) ? $_POST['subscription_date'] : date('Y-m-d');
         $months = intval(isset($_POST['months']) ? $_POST['months'] : 12);
@@ -217,12 +232,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $stmt = $conn->prepare("
                 UPDATE tv_clients SET 
-                first_name = ?, phone = ?, address = ?, provider_id = ?, subscription_date = ?, months = ?, 
+                first_name = ?, phone = ?, address = ?, latitude = ?, longitude = ?, provider_id = ?, subscription_date = ?, months = ?, 
                 login = ?, password = ?, device_count = ?, viewing_program = ?, paid = ?, provider_cost = ?, earned = ?, notes = ? 
                 WHERE id = ?
             ");
             $stmt->execute([
-                $first_name, $phone, $address, $provider_id, $subscription_date, $months, 
+                $first_name, $phone, $address, $latitude, $longitude, $provider_id, $subscription_date, $months, 
                 $login, $password, $device_count, $viewing_program, $paid, $provider_cost, $earned, $notes, $client_id
             ]);
             
@@ -448,6 +463,33 @@ if (isset($_GET['edit'])) {
             background-color: #28a745;
             border-color: #28a745;
             color: white;
+        }
+        
+        .address-suggestions {
+            position: absolute;
+            background: var(--dk-dark-bg);
+            border: 1px solid var(--dk-gray-700);
+            border-radius: 0 0 5px 5px;
+            width: 95%;
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .address-suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--dk-gray-700);
+        }
+        
+        .address-suggestion-item:hover {
+            background-color: var(--dk-gray-800);
+        }
+        
+        .address-wrapper {
+            position: relative;
         }
     </style>
     <div class="p-4">
@@ -708,7 +750,12 @@ if (isset($_GET['edit'])) {
                         </div>
                         <div class="col-12">
                             <label class="form-label"><?= htmlspecialchars(t('address')) ?></label>
-                            <input type="text" name="address" id="edit_address" class="form-control">
+                            <div class="address-wrapper">
+                                <input type="text" name="address" id="edit_address" class="form-control" autocomplete="off" placeholder="Start typing...">
+                                <input type="hidden" name="latitude" id="edit_latitude">
+                                <input type="hidden" name="longitude" id="edit_longitude">
+                                <div id="edit_address-suggestions" class="address-suggestions"></div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"><?= htmlspecialchars(t('provider')) ?></label>
@@ -946,9 +993,11 @@ if (isset($_GET['edit'])) {
                     document.getElementById('edit_client_id').value = client.id;
                     document.getElementById('edit_first_name').value = client.first_name;
                     document.getElementById('edit_phone').value = client.phone;
-                    document.getElementById('edit_address').value = client.address || '';
-                    document.getElementById('edit_provider_id').value = client.provider_id || '';
-                    document.getElementById('edit_subscription_date').value = client.subscription_date;
+            document.getElementById('edit_address').value = client.address;
+            document.getElementById('edit_latitude').value = client.latitude;
+            document.getElementById('edit_longitude').value = client.longitude;
+            document.getElementById('edit_provider_id').value = client.provider_id;
+            document.getElementById('edit_subscription_date').value = client.subscription_date;
                     document.getElementById('edit_months').value = client.months;
                     document.getElementById('edit_login').value = client.login || '';
                     document.getElementById('edit_password').value = client.password || '';
@@ -1104,5 +1153,58 @@ if (isset($_GET['edit'])) {
                 alert('<?= t('error_loading_sms') ?>');
             });
     }
+    
+    // Автокомплит адреса в модальном окне
+    const editAddressInput = document.getElementById('edit_address');
+    const editSuggestionsBox = document.getElementById('edit_address-suggestions');
+    const editLatInput = document.getElementById('edit_latitude');
+    const editLonInput = document.getElementById('edit_longitude');
+    let editDebounceTimer;
+
+    editAddressInput.addEventListener('input', function() {
+        const query = this.value;
+        
+        // Сбрасываем координаты при изменении адреса вручную
+        // (но не очищаем сразу, так как пользователь может просто исправлять опечатку)
+        // Логичнее очистить только если он выберет новый из списка или сильно изменит
+        
+        clearTimeout(editDebounceTimer);
+        editSuggestionsBox.style.display = 'none';
+        
+        if (query.length < 3) return;
+        
+        editDebounceTimer = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Latvia')}&limit=5&addressdetails=1&accept-language=ru`, {
+                headers: { 'Accept-Language': 'ru' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                editSuggestionsBox.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'address-suggestion-item';
+                        div.textContent = item.display_name;
+                        div.addEventListener('click', function() {
+                            editAddressInput.value = item.display_name;
+                            editLatInput.value = item.lat;
+                            editLonInput.value = item.lon;
+                            editSuggestionsBox.style.display = 'none';
+                        });
+                        editSuggestionsBox.appendChild(div);
+                    });
+                    editSuggestionsBox.style.display = 'block';
+                }
+            })
+            .catch(err => console.error('Geocoding error:', err));
+        }, 500);
+    });
+
+    // Скрывать подсказки при клике вне
+    document.addEventListener('click', function(e) {
+        if (e.target !== editAddressInput && e.target !== editSuggestionsBox) {
+            editSuggestionsBox.style.display = 'none';
+        }
+    });
 </script>
 <?php include '../includes/footer.php'; ?>
