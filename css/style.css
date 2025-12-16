@@ -831,3 +831,38 @@ textarea {
 ::-ms-input-placeholder {
     color: var(--dk-gray-500) !important;
 }
+/** --------------------------------
+ -- Pagination
+-------------------------------- */
+.pagination {
+    margin-top: 20px;
+}
+
+.pagination .page-link {
+    background-color: var(--dk-dark-bg);
+    border-color: var(--dk-gray-700);
+    color: var(--dk-gray-300);
+    transition: all 0.3s;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--dk-gray-800);
+    border-color: var(--dk-gray-600);
+    color: white;
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: var(--dk-darker-bg);
+    border-color: var(--dk-gray-700);
+    color: var(--dk-gray-600);
+}
