@@ -289,7 +289,7 @@ The system is built with i18n in mind.
 
 | Dashboard Overview | Client Management |
 |:---:|:---:|
-| ![Dashboard](https://iptv.standigital.lv/img/2.png) | ![Clients](https://iptv.standigital.lv/img/7.png) |
+| ![Dashboard](https://iptv.standigital.lv/img/2.png) | ![Clients](https://iptv.standigital.lv/img/73.png) |
 | *Visualizes income, active users, and quick actions* | *Filterable list of all clients with status indicators* |
 
 | Financial Reports | Analysis Charts |
