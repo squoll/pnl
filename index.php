@@ -304,7 +304,7 @@ $months_labels = [
                             <p class="text-muted"><?= htmlspecialchars(t('no_expiring_subscriptions')) ?></p>
                         <?php else: ?>
                             <?php foreach ($expiring_clients as $client): ?>
-                                <div class="admin d-flex align-items-center rounded-2 p-3 mb-3" style="cursor: pointer;" onclick="window.location.href='pages/tv_clients.php#client-<?= $client['id'] ?>';">
+                                <div class="admin d-flex align-items-center rounded-2 p-3 mb-3" style="cursor: pointer;" onclick="viewIndexClient(<?= $client['id'] ?>);">
                                     <div class="img">
                                         <div class="rounded-circle bg-<?= $client['days_left'] <= 7 ? 'danger' : ($client['days_left'] <= 14 ? 'warning' : 'info') ?> d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
                                             <span class="text-white fw-bold"><?= $client['days_left'] ?><?= htmlspecialchars(t('days_short')) ?></span>
@@ -691,5 +691,70 @@ $months_labels = [
                 alert(labels.error_loading_sms);
             });
     }
+
+    function viewIndexClient(clientId) {
+        fetch('pages/get_client.php?id=' + clientId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const client = data.client;
+                    let html = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong><?= t('name') ?>:</strong> ${client.first_name}</p>
+                                <p><strong><?= t('phone') ?>:</strong> ${client.phone}</p>
+                                <p><strong><?= t('address') ?>:</strong> ${client.address || '<?= t('none') ?>'}</p>
+                                <p><strong><?= t('provider') ?>:</strong> ${client.operator || '<?= t('none') ?>'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong><?= t('subscription_date') ?>:</strong> ${client.subscription_date}</p>
+                                <p><strong><?= t('subscription_term') ?>:</strong> ${client.months} <?= t('months_suffix') ?></p>
+                                <p><strong><?= t('login_label') ?>:</strong> ${client.login || '<?= t('none') ?>'}</p>
+                                <p><strong><?= t('password_label') ?>:</strong> ${client.password || '<?= t('none') ?>'}</p>
+                            </div>
+                            <div class="col-12">
+                                <hr>
+                                <p><strong><?= t('device_count') ?>:</strong> ${client.device_count}</p>
+                                <p><strong><?= t('viewing_program_label') ?>:</strong> ${client.viewing_program || '<?= t('none') ?>'}</p>
+                                <p><strong><?= t('paid_eur') ?>:</strong> €${parseFloat(client.paid).toFixed(2)}</p>
+                                <p><strong><?= t('provider_cost_eur') ?>:</strong> €${parseFloat(client.provider_cost).toFixed(2)}</p>
+                                <p><strong><?= t('my_earned_eur') ?>:</strong> €${parseFloat(client.earned).toFixed(2)}</p>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('indexClientInfo').innerHTML = html;
+                    
+                    // Устанавливаем ссылки для кнопок Продлить и Редактировать
+                    document.getElementById('indexBtnExtend').href = 'pages/tv_clients.php#extend-' + client.id;
+                    document.getElementById('indexBtnEdit').href = 'pages/tv_clients.php#edit-' + client.id;
+                    
+                    const viewModal = new bootstrap.Modal(document.getElementById('viewIndexModal'));
+                    viewModal.show();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
 </script>
+
+<!-- Модальное окно просмотра клиента на главной -->
+<div class="modal fade" id="viewIndexModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?= htmlspecialchars(t('client_info')) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="indexClientInfo">
+                <!-- Данные будут загружены через JS -->
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <a href="#" id="indexBtnExtend" class="btn btn-success"><?= htmlspecialchars(t('extend_subscription_title')) ?></a>
+                    <a href="#" id="indexBtnEdit" class="btn btn-primary"><?= htmlspecialchars(t('edit_client')) ?></a>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= htmlspecialchars(t('close')) ?></button>
+            </div>
+        </div>
+    </div>
+</div>
 <?php include 'includes/footer.php'; ?>

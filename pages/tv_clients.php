@@ -1206,5 +1206,22 @@ if (isset($_GET['edit'])) {
             editSuggestionsBox.style.display = 'none';
         }
     });
+
+    // Обработка хэшей для автоматического открытия модалок с главной страницы
+    window.addEventListener('load', function() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash.startsWith('extend-')) {
+                const id = hash.split('-')[1];
+                if (id) extendSubscription(id);
+            } else if (hash.startsWith('edit-')) {
+                const id = hash.split('-')[1];
+                if (id) editClient(id);
+            } else if (hash.startsWith('client-')) {
+                const id = hash.split('-')[1];
+                if (id) viewClient(id);
+            }
+        }
+    });
 </script>
 <?php include '../includes/footer.php'; ?>
