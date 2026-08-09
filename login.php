@@ -444,5 +444,6 @@ if ($security->isIpBlocked($client_ip)) {
             }
         });
     </script>
+    <script src="js/pwa.js"></script>
 </body>
 </html>
