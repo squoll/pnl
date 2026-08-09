@@ -719,6 +719,9 @@ $months_labels = [
                                 <p><strong><?= t('paid_eur') ?>:</strong> €${parseFloat(client.paid).toFixed(2)}</p>
                                 <p><strong><?= t('provider_cost_eur') ?>:</strong> €${parseFloat(client.provider_cost).toFixed(2)}</p>
                                 <p><strong><?= t('my_earned_eur') ?>:</strong> €${parseFloat(client.earned).toFixed(2)}</p>
+                                <hr>
+                                <p><strong><?= t('notes') ?>:</strong></p>
+                                <div class="bg-dark p-2 rounded text-white">${client.notes || '<?= t('none') ?>'}</div>
                             </div>
                         </div>
                     `;
