@@ -1,7 +1,8 @@
 <?php
+// Require library FIRST so session can unserialize ByteBuffer objects
+require_once '../includes/webauthn_lib/WebAuthn-master/src/WebAuthn.php';
 require_once '../includes/auth.php';
 require_once '../config/db.php';
-
 // Check if logged in for registration
 if (!isLoggedIn()) {
     header('HTTP/1.1 401 Unauthorized');
@@ -14,8 +15,6 @@ if (!$user) {
     exit();
 }
 
-// Require library
-require_once '../includes/webauthn_lib/WebAuthn-master/src/WebAuthn.php';
 $rpId = $_SERVER['HTTP_HOST'];
 $WebAuthn = new \lbuchs\WebAuthn\WebAuthn('StanDigital', $rpId, ['android-key', 'android-safetynet', 'apple', 'fido-u2f', 'none', 'packed', 'tpm'], true);
 

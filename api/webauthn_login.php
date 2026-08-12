@@ -1,9 +1,9 @@
 <?php
+// Require library FIRST so session can unserialize ByteBuffer objects
+require_once '../includes/webauthn_lib/WebAuthn-master/src/WebAuthn.php';
 session_start();
 require_once '../config/db.php';
 
-// Require library
-require_once '../includes/webauthn_lib/WebAuthn-master/src/WebAuthn.php';
 $rpId = $_SERVER['HTTP_HOST'];
 $WebAuthn = new \lbuchs\WebAuthn\WebAuthn('StanDigital', $rpId, ['android-key', 'android-safetynet', 'apple', 'fido-u2f', 'none', 'packed', 'tpm'], true);
 
