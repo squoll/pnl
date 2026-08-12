@@ -4,7 +4,8 @@ require_once '../config/db.php';
 
 // Require library
 require_once '../includes/webauthn_lib/WebAuthn-master/src/WebAuthn.php';
-$WebAuthn = new \lbuchs\WebAuthn\WebAuthn('StanDigital', 'localhost', ['android-key', 'android-safetynet', 'apple', 'fido-u2f', 'none', 'packed', 'tpm']);
+$rpId = $_SERVER['HTTP_HOST'];
+$WebAuthn = new \lbuchs\WebAuthn\WebAuthn('StanDigital', $rpId, ['android-key', 'android-safetynet', 'apple', 'fido-u2f', 'none', 'packed', 'tpm']);
 
 $action = $_GET['action'] ?? '';
 
