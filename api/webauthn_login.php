@@ -39,11 +39,11 @@ if ($action === 'getArgs') {
 }
 
 if ($action === 'process') {
-    $clientDataJSON = base64_decode($_POST['clientDataJSON'] ?? '');
-    $authenticatorData = base64_decode($_POST['authenticatorData'] ?? '');
-    $signature = base64_decode($_POST['signature'] ?? '');
-    $userHandle = isset($_POST['userHandle']) ? base64_decode($_POST['userHandle']) : null;
-    $id = base64_decode($_POST['id'] ?? '');
+    $clientDataJSON = base64_decode(strtr($_POST['clientDataJSON'] ?? '', '-_', '+/'));
+    $authenticatorData = base64_decode(strtr($_POST['authenticatorData'] ?? '', '-_', '+/'));
+    $signature = base64_decode(strtr($_POST['signature'] ?? '', '-_', '+/'));
+    $userHandle = isset($_POST['userHandle']) ? base64_decode(strtr($_POST['userHandle'], '-_', '+/')) : null;
+    $id = base64_decode(strtr($_POST['id'] ?? '', '-_', '+/'));
     $challenge = $_SESSION['webauthn_challenge'] ?? '';
     
     $credIdBase64 = base64_encode($id);
@@ -76,9 +76,9 @@ if ($action === 'process') {
         } else {
             throw new Exception("User not found");
         }
-    } catch (Exception $ex) {
+    } catch (\Throwable $ex) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'msg' => $ex->getMessage()]);
+        echo json_encode(['success' => false, 'msg' => $ex->getMessage() . ' in ' . basename($ex->getFile()) . ':' . $ex->getLine()]);
     }
     exit();
 }

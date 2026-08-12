@@ -40,8 +40,8 @@ if ($action === 'getArgs') {
 }
 
 if ($action === 'process') {
-    $clientDataJSON = base64_decode($_POST['clientDataJSON'] ?? '');
-    $attestationObject = base64_decode($_POST['attestationObject'] ?? '');
+    $clientDataJSON = base64_decode(strtr($_POST['clientDataJSON'] ?? '', '-_', '+/'));
+    $attestationObject = base64_decode(strtr($_POST['attestationObject'] ?? '', '-_', '+/'));
     $challenge = $_SESSION['webauthn_challenge'] ?? '';
     
     try {
@@ -64,9 +64,9 @@ if ($action === 'process') {
         
         header('Content-Type: application/json');
         echo json_encode(['success' => true]);
-    } catch (Exception $ex) {
+    } catch (\Throwable $ex) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'msg' => $ex->getMessage()]);
+        echo json_encode(['success' => false, 'msg' => $ex->getMessage() . ' in ' . basename($ex->getFile()) . ':' . $ex->getLine()]);
     }
     exit();
 }
