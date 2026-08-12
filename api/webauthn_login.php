@@ -23,10 +23,12 @@ if ($action === 'getArgs') {
     $getArgs = $WebAuthn->getGetArgs(
         $allowedCredentials, // allowed credentials
         20, // timeout
-        false, // allow un-registered
-        true, // user verification
-        true, // user presence
-        false // require user handle
+        true, // allowUsb
+        true, // allowNfc
+        true, // allowBle
+        true, // allowHybrid
+        true, // allowInternal
+        'preferred' // requireUserVerification
     );
     
     $_SESSION['webauthn_challenge'] = $WebAuthn->getChallenge();
@@ -56,7 +58,7 @@ if ($action === 'process') {
         }
         
         // processGet
-        $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $cred['public_key'], $challenge, null, true, true);
+        $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $cred['public_key'], $challenge, null, false, true);
         
         // Log user in
         $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");

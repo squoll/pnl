@@ -29,7 +29,7 @@ if ($action === 'getArgs') {
         $user['username'], // user display name
         20, // timeout
         false, // requireResidentKey
-        \lbuchs\WebAuthn\WebAuthn::REQUIRE_USER_VERIFICATION_PREFERRED
+        'preferred' // requireUserVerification
     );
     
     $_SESSION['webauthn_challenge'] = $WebAuthn->getChallenge();
@@ -45,7 +45,7 @@ if ($action === 'process') {
     $challenge = $_SESSION['webauthn_challenge'] ?? '';
     
     try {
-        $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, \lbuchs\WebAuthn\WebAuthn::REQUIRE_USER_VERIFICATION_PREFERRED, true, false);
+        $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, false, true, false);
         
         $credentialId = base64_encode($data->credentialId);
         $publicKey = $data->credentialPublicKey;
