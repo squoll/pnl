@@ -23,6 +23,20 @@ try {
 } catch (PDOException $e) {
 }
 
+try {
+    $conn->exec("CREATE TABLE IF NOT EXISTS webauthn_credentials (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        credential_id VARCHAR(255) NOT NULL,
+        public_key TEXT NOT NULL,
+        user_handle VARCHAR(255) DEFAULT NULL,
+        sign_count INT NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY(credential_id)
+    )");
+} catch (PDOException $e) {
+}
+
 // Получаем статистику
 // Количество клиентов
 $stmt = $conn->prepare("SELECT COUNT(*) FROM tv_clients");

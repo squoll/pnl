@@ -17,7 +17,8 @@ function isLoggedIn() {
 
 function requireAuth() {
     if (!isLoggedIn()) {
-        header('Location: ../login.php');
+        $redirect = strpos($_SERVER['PHP_SELF'], '/pages/') !== false ? '../login.php' : 'login.php';
+        header('Location: ' . $redirect);
         exit();
     }
 }

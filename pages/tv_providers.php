@@ -7,12 +7,27 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit();
 }
 
+require_once '../includes/i18n.php';
+
 $providers = [];
 try {
     $stmt = $conn->query("SELECT * FROM tv_providers ORDER BY operator");
     $providers = $stmt->fetchAll();
 } catch(PDOException $e) {
     $error = t('error_providers_load') . ": " . $e->getMessage();
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_provider'])) {
+    $provider_id = intval($_POST['provider_id']);
+    try {
+        $stmt = $conn->prepare("DELETE FROM tv_providers WHERE id = ?");
+        $stmt->execute([$provider_id]);
+        $success = t('provider_delete_success');
+        
+        $stmt = $conn->query("SELECT * FROM tv_providers ORDER BY operator");
+        $providers = $stmt->fetchAll();
+    } catch(PDOException $e) {
+        $error = t('error_provider_delete') . ": " . $e->getMessage();
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_provider'])) {
@@ -42,7 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_provider'])) {
     }
 }
 
-require_once '../includes/i18n.php';
 include '../includes/header.php';
 ?>
 
@@ -107,8 +121,14 @@ include '../includes/header.php';
             <?php foreach ($providers as $provider): ?>
                 <div class="col-md-6 mb-4">
                     <div class="card h-100">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><?= htmlspecialchars($provider['operator']) ?></h5>
+                            <form method="POST" class="d-inline" onsubmit="return confirm('<?= htmlspecialchars(t('delete_provider_confirm')) ?>');">
+                                <input type="hidden" name="provider_id" value="<?= $provider['id'] ?>">
+                                <button type="submit" name="delete_provider" class="btn btn-sm btn-danger">
+                                    <?= htmlspecialchars(t('delete_provider')) ?>
+                                </button>
+                            </form>
                         </div>
                         <div class="card-body">
                             <?php if ($provider['website']): ?>

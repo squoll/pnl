@@ -36,11 +36,15 @@ return [
     'remember_me' => 'Atcerēties mani',
     'login_loading' => 'Pieteikšanās...',
     'forgot_password_msg' => 'Sazinieties ar sistēmas administratoru, lai atjaunotu paroli.',
-    'provider_add_success' => 'Pakalpojumu sniedzējs veiksmīgi pievienots!'
-    , 'access_denied' => 'Piekļuve liegta'
-    , 'ip_blocked_msg' => 'Jūsu IP uz laiku ir bloķēts daudzo neveiksmīgo mēģinājumu dēļ. Mēģiniet vēlāk.'
-    , 'invalid_csrf_token' => 'Nederīgs drošības marķieris'
-    , 'invalid_credentials' => 'Nederīgs lietotājvārds vai parole'
-    , 'too_many_attempts' => 'Pārāk daudz neveiksmīgu mēģinājumu. Jūsu IP tiek bloķēts uz 15 minūtēm.'
-    , 'server_error_try_later' => 'Servera kļūda. Lūdzu, mēģiniet vēlāk.'
+    'provider_add_success' => 'Pakalpojumu sniedzējs veiksmīgi pievienots!',
+    'provider_delete_success' => 'Pakalpojumu sniedzējs veiksmīgi izdzēsts!',
+    'error_provider_delete' => 'Kļūda dzēšot pakalpojumu sniedzēju',
+    'delete_provider' => 'Dzēst pakalpojumu sniedzēju',
+    'delete_provider_confirm' => 'Vai tiešām vēlaties dzēst šo pakalpojumu sniedzēju?',
+    'access_denied' => 'Piekļuve liegta',
+    'ip_blocked_msg' => 'Jūsu IP uz laiku ir bloķēts daudzo neveiksmīgo mēģinājumu dēļ. Mēģiniet vēlāk.',
+    'invalid_csrf_token' => 'Nederīgs drošības marķieris',
+    'invalid_credentials' => 'Nederīgs lietotājvārds vai parole',
+    'too_many_attempts' => 'Pārāk daudz neveiksmīgu mēģinājumu. Jūsu IP tiek bloķēts uz 15 minūtēm.',
+    'server_error_try_later' => 'Servera kļūda. Lūdzu, mēģiniet vēlāk.',
 ];

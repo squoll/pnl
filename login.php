@@ -353,6 +353,10 @@ if ($security->isIpBlocked($client_ip)) {
                 <i class="fas fa-sign-in-alt"></i> <?= htmlspecialchars(t('login_submit')) ?>
             </button>
             
+            <button type="button" class="btn btn-login mt-2" id="webauthnLoginBtn" style="display: none; background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
+                <i class="fas fa-fingerprint"></i> Face ID / Fingerprint
+            </button>
+            
             <div class="form-check mt-3">
                 <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me">
                 <label class="form-check-label" for="rememberMe">
@@ -441,6 +445,96 @@ if ($security->isIpBlocked($client_ip)) {
                 document.getElementById('username').value = '';
                 document.getElementById('password').value = '';
                 document.getElementById('username').focus();
+            }
+        });
+        
+        // WebAuthn login logic
+        function base64urlToBuffer(base64url) {
+            var padding = '='.repeat((4 - base64url.length % 4) % 4);
+            var base64 = (base64url + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            var rawData = window.atob(base64);
+            var outputArray = new Uint8Array(rawData.length);
+            for (var i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray.buffer;
+        }
+        function bufferToBase64url(buffer) {
+            var bytes = new Uint8Array(buffer);
+            var str = '';
+            for (var i = 0; i < bytes.byteLength; i++) {
+                str += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        if (window.PublicKeyCredential) {
+            PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then((available) => {
+                if (available) {
+                    document.getElementById('webauthnLoginBtn').style.display = 'block';
+                    
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const faceIdEnabled = localStorage.getItem('faceid_enabled');
+                    
+                    if (urlParams.has('timeout') || faceIdEnabled === '1') {
+                        setTimeout(() => document.getElementById('webauthnLoginBtn').click(), 500);
+                    }
+                }
+            });
+        }
+
+        document.getElementById('webauthnLoginBtn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('api/webauthn_login.php?action=getArgs');
+                const getArgsStr = await response.text();
+                
+                let getArgs;
+                try {
+                    getArgs = JSON.parse(getArgsStr);
+                } catch(e) {
+                    alert("Face ID login unavailable. Register first.");
+                    return;
+                }
+                
+                if (!getArgs.publicKey) {
+                     alert("Error getting Face ID arguments.");
+                     return;
+                }
+                
+                getArgs.publicKey.challenge = base64urlToBuffer(getArgs.publicKey.challenge);
+                if (getArgs.publicKey.allowCredentials) {
+                    for (let i = 0; i < getArgs.publicKey.allowCredentials.length; i++) {
+                        getArgs.publicKey.allowCredentials[i].id = base64urlToBuffer(getArgs.publicKey.allowCredentials[i].id);
+                    }
+                }
+                
+                const cred = await navigator.credentials.get(getArgs);
+                
+                const formData = new FormData();
+                formData.append('id', bufferToBase64url(cred.rawId));
+                formData.append('clientDataJSON', bufferToBase64url(cred.response.clientDataJSON));
+                formData.append('authenticatorData', bufferToBase64url(cred.response.authenticatorData));
+                formData.append('signature', bufferToBase64url(cred.response.signature));
+                if (cred.response.userHandle) {
+                    formData.append('userHandle', bufferToBase64url(cred.response.userHandle));
+                }
+                
+                const loginResp = await fetch('api/webauthn_login.php?action=process', {
+                    method: 'POST',
+                    body: formData
+                });
+                const loginData = await loginResp.json();
+                
+                if (loginData.success) {
+                    window.location.href = 'index.php';
+                } else {
+                    alert("Login failed: " + (loginData.msg || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error(err);
+                if (err.name !== 'NotAllowedError') {
+                    alert("Face ID login failed.");
+                }
             }
         });
     </script>

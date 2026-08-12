@@ -100,7 +100,84 @@ include '../includes/header.php';
             </form>
         </div>
     </div>
+    <div class="card mt-4" id="webauthnRegisterContainer" style="display: none;">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-fingerprint"></i> Face ID / Fingerprint</h5>
+        </div>
+        <div class="card-body">
+            <p>You can use Face ID or Fingerprint to log in without a password.</p>
+            <button class="btn btn-success" id="btnRegisterWebAuthn">Register Device</button>
+        </div>
+    </div>
 </div>
+
+<script>
+    function base64urlToBuffer(base64url) {
+        var padding = '='.repeat((4 - base64url.length % 4) % 4);
+        var base64 = (base64url + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray.buffer;
+    }
+    function bufferToBase64url(buffer) {
+        var bytes = new Uint8Array(buffer);
+        var str = '';
+        for (var i = 0; i < bytes.byteLength; i++) {
+            str += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    if (window.PublicKeyCredential) {
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then((available) => {
+            if (available) {
+                document.getElementById('webauthnRegisterContainer').style.display = 'block';
+            }
+        });
+    }
+
+    document.getElementById('btnRegisterWebAuthn').addEventListener('click', async function() {
+        try {
+            const getArgsResp = await fetch('../api/webauthn_register.php?action=getArgs');
+            const getArgs = await getArgsResp.json();
+            
+            getArgs.publicKey.challenge = base64urlToBuffer(getArgs.publicKey.challenge);
+            getArgs.publicKey.user.id = base64urlToBuffer(getArgs.publicKey.user.id);
+            if (getArgs.publicKey.excludeCredentials) {
+                for (let i = 0; i < getArgs.publicKey.excludeCredentials.length; i++) {
+                    getArgs.publicKey.excludeCredentials[i].id = base64urlToBuffer(getArgs.publicKey.excludeCredentials[i].id);
+                }
+            }
+            
+            const cred = await navigator.credentials.create(getArgs);
+            
+            const formData = new FormData();
+            formData.append('clientDataJSON', bufferToBase64url(cred.response.clientDataJSON));
+            formData.append('attestationObject', bufferToBase64url(cred.response.attestationObject));
+            
+            const processResp = await fetch('../api/webauthn_register.php?action=process', {
+                method: 'POST',
+                body: formData
+            });
+            const processData = await processResp.json();
+            
+            if (processData.success) {
+                localStorage.setItem('faceid_enabled', '1');
+                alert('Face ID / Fingerprint registered successfully!');
+            } else {
+                alert('Registration failed: ' + processData.msg);
+            }
+        } catch (err) {
+            console.error(err);
+            if (err.name !== 'NotAllowedError') {
+                alert('Face ID / Fingerprint registration failed.');
+            }
+        }
+    });
+</script>
 
 <?php include '../includes/footer.php'; ?>
 
