@@ -50,6 +50,15 @@ if ($action === 'process') {
         $credentialId = base64_encode($data->credentialId);
         $publicKey = $data->credentialPublicKey;
         
+        $conn->exec("CREATE TABLE IF NOT EXISTS webauthn_credentials (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            credential_id VARCHAR(255) NOT NULL,
+            public_key TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )");
+        
         $stmt = $conn->prepare("INSERT INTO webauthn_credentials (user_id, credential_id, public_key) VALUES (?, ?, ?)");
         $stmt->execute([$user['id'], $credentialId, $publicKey]);
         
