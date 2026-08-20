@@ -715,6 +715,11 @@ $months_labels = [
                     let html = `
                         <div class="row">
                             <div class="col-md-6">
+                                <p>
+                                    <strong><?= t('status') ?>:</strong> 
+                                    ${client.days_left !== undefined ? 
+                                        (client.days_left >= 0 ? `<span class="badge bg-success"><?= t('active') ?></span>` : `<span class="badge bg-danger"><?= t('expired') ?></span>`) : ''}
+                                </p>
                                 <p><strong><?= t('name') ?>:</strong> ${client.first_name}</p>
                                 <p><strong><?= t('phone') ?>:</strong> ${client.phone}</p>
                                 <p><strong><?= t('address') ?>:</strong> ${client.address || '<?= t('none') ?>'}</p>
@@ -723,6 +728,12 @@ $months_labels = [
                             <div class="col-md-6">
                                 <p><strong><?= t('subscription_date') ?>:</strong> ${client.subscription_date}</p>
                                 <p><strong><?= t('subscription_term') ?>:</strong> ${client.months} <?= t('months_suffix') ?></p>
+                                ${client.expiration_date ? `<p><strong><?= t('current_expiration') ?>:</strong> ${client.expiration_date}</p>` : ''}
+                                ${client.days_left !== undefined ? 
+                                    (client.days_left >= 0 ? 
+                                        `<p><strong><?= t('map_popup_days_left') ?>:</strong> ${Math.floor(client.days_left / 30) > 0 ? Math.floor(client.days_left / 30) + ' <?= t('months_suffix') ?> ' : ''}${client.days_left % 30} <?= t('days') ?></p>` :
+                                        `<p><strong><?= t('map_popup_days_left') ?>:</strong> <span class="text-danger"><?= t('expired') ?></span></p>`
+                                    ) : ''}
                                 <p><strong><?= t('login_label') ?>:</strong> ${client.login || '<?= t('none') ?>'}</p>
                                 <p><strong><?= t('password_label') ?>:</strong> ${client.password || '<?= t('none') ?>'}</p>
                             </div>
